@@ -1,8 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 
-// 색·모션·그림자 값의 단일 소스는 src/renderer/styles/tokens.css
+// 색·모션·그림자 값의 단일 소스는 packages/editor/src/renderer/styles/tokens.css
 module.exports = {
-  content: ['./src/**/*.{js,jsx,ts,tsx,html}'],
+  content: [
+    './src/**/*.{js,jsx,ts,tsx,html}',
+    './packages/editor/src/**/*.{js,jsx,ts,tsx,html}',
+  ],
   theme: {
     extend: {
       borderRadius: {

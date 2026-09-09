@@ -6,9 +6,9 @@ import {
   EDITOR_ELEMENT_PROPERTY_KEYS,
   EDITOR_OPS_VERSION,
   isEditorElementPropertyPatchV1,
-} from '../src/types/editor';
+} from '../packages/editor/src/types/editor';
 
-// Rust 테스트(src-tauri/src/models/editor.rs)와 같은 fixture를 공유해
+// 공통 Rust 엔진 models/editor.rs 테스트와 같은 fixture를 공유해
 // 양 언어의 property 태그 목록이 기계적으로 일치함을 고정한다
 const FIXTURE_PATH = join(__dirname, 'fixtures', 'editor-property-tags.json');
 

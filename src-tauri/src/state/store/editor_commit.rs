@@ -1,5 +1,4 @@
 use super::*;
-use crate::state::native_element_id;
 
 impl AppStore {
     #[cfg(test)]
@@ -131,13 +130,7 @@ impl AppStore {
         admission: &HistoryAdmissionLease,
         runtime_counters: Option<&KeyCounters>,
     ) -> std::result::Result<CommittedEditorChange, EditorCommitError> {
-        if let Some(changes) = request.changes.as_mut() {
-            if let Some(keys) = changes.keys.as_mut() {
-                normalize_key_mappings(keys);
-            }
-        }
-        validate_request_envelope(&request)?;
-        let fingerprint = request_fingerprint(&request)?;
+        let fingerprint = dmnote_editor_engine::commit::normalize_editor_request(&mut request)?;
         let mut guard = self
             .lock_for_update()
             .map_err(|error| EditorCommitError::io(error.to_string()))?;
@@ -145,16 +138,14 @@ impl AppStore {
             .revalidate_for(&self.history_gate)
             .map_err(|_| EditorCommitError::history_in_progress())?;
 
-        if let Some(ack) = guard
-            .mutation_acks
-            .iter()
-            .find(|ack| ack.id == request.mutation_id)
-        {
-            if ack.fingerprint != fingerprint {
-                return Err(EditorCommitError::mutation_id_reused());
-            }
+        if let Some(result) = dmnote_editor_engine::commit::validate_editor_request_state(
+            &guard.data,
+            &request,
+            &guard.mutation_acks,
+            &fingerprint,
+        )? {
             return Ok(CommittedEditorChange {
-                result: ack.result.clone(),
+                result,
                 event: None,
                 replayed: true,
                 document: EditorDocumentV1::from_store(&guard.data),
@@ -165,23 +156,6 @@ impl AppStore {
                 runtime_publication_generation: guard.revision,
             });
         }
-
-        if request.base_revision != guard.data.editor_revision {
-            return Err(EditorCommitError::revision_conflict(
-                guard.data.editor_revision,
-            ));
-        }
-
-        if request
-            .changes
-            .as_ref()
-            .is_some_and(|changes| changes.keys.is_some())
-            && key_mappings_contain_multi(&guard.data.keys)
-            && !request.multi_key
-        {
-            return Err(EditorCommitError::multi_key_unsupported());
-        }
-
         let gesture_id = request.history_gesture_id();
         let gesture_ids = request.echoed_gesture_ids();
         let options = EditorPatchCommitOptions {
@@ -193,25 +167,24 @@ impl AppStore {
             apply_key_side_effects: true,
             enforce_touched_fields: false,
         };
-        let change = if let Some(changes) = request.changes.as_mut() {
-            changes.merge_omitted_sprite_fields(&guard.data.sprite_positions);
-            native_element_id::prepare_commit_patch_element_ids(&guard.data, changes)?;
-            let touched_fields = changes.included_fields();
-            self.commit_editor_patch_locked(
-                &mut guard,
-                changes,
-                &touched_fields,
-                runtime_counters,
-                options,
-            )?
-        } else if let Some(ops) = request.ops.as_ref() {
-            self.commit_editor_ops_locked(&mut guard, ops, runtime_counters, options)?
-        } else {
-            return Err(EditorCommitError::validation(
-                "EDITOR_MUTATION_REQUIRED",
-                "editor commit must contain exactly one mutation payload",
-            ));
-        };
+        let mut current_store = guard.data.clone();
+        if let Some(counters) = runtime_counters {
+            current_store.key_counters = counters.clone();
+        }
+        let transition = dmnote_editor_engine::commit::prepare_editor_request_transition(
+            &current_store,
+            &mut request,
+        )?;
+        let change = self.commit_editor_transition_locked(
+            &mut guard,
+            current_store,
+            transition.current,
+            transition.candidate,
+            transition.scratch,
+            transition.changed_fields,
+            transition.op_results,
+            options,
+        )?;
         insert_mutation_ack(
             &mut guard.mutation_acks,
             request.mutation_id,
@@ -257,30 +230,6 @@ impl AppStore {
         )
     }
 
-    fn commit_editor_ops_locked(
-        &self,
-        guard: &mut VersionedStoreState,
-        ops: &[crate::models::EditorOpV1],
-        runtime_counters: Option<&KeyCounters>,
-        options: EditorPatchCommitOptions,
-    ) -> std::result::Result<CommittedEditorChange, EditorCommitError> {
-        let mut current_store = guard.data.clone();
-        if let Some(counters) = runtime_counters {
-            current_store.key_counters = counters.clone();
-        }
-        let transition = prepare_editor_ops_transition(&current_store, ops)?;
-        self.commit_editor_transition_locked(
-            guard,
-            current_store,
-            transition.current,
-            transition.candidate,
-            transition.scratch,
-            transition.changed_fields,
-            Some(transition.op_results),
-            options,
-        )
-    }
-
     #[allow(clippy::too_many_arguments)]
     fn commit_editor_transition_locked(
         &self,
@@ -288,87 +237,27 @@ impl AppStore {
         current_store: AppStoreData,
         current: EditorDocumentV1,
         candidate: EditorDocumentV1,
-        mut scratch: AppStoreData,
+        scratch: AppStoreData,
         changed_fields: Vec<EditorField>,
         op_results: Option<Vec<EditorOpResultV1>>,
         options: EditorPatchCommitOptions,
     ) -> std::result::Result<CommittedEditorChange, EditorCommitError> {
-        if changed_fields.is_empty() {
-            return Ok(CommittedEditorChange {
-                result: EditorCommitResult {
-                    revision: current_store.editor_revision,
-                    changed_fields,
-                    op_results,
-                },
-                event: None,
-                replayed: false,
-                document: current,
-                selected_key_type: current_store.selected_key_type,
-                key_counters: current_store.key_counters,
-                history_status: None,
-                plugin_instances_changes: Vec::new(),
-                runtime_publication_generation: guard.revision,
-            });
+        let mut prepared = dmnote_editor_engine::commit::prepare_editor_commit(
+            &guard.history,
+            guard.revision,
+            current_store,
+            current,
+            candidate,
+            scratch,
+            changed_fields,
+            op_results,
+            options,
+        )?;
+        if let Some(scratch) = prepared.take_pending_store() {
+            self.commit_locked(guard, scratch, ())
+                .map_err(|error| EditorCommitError::io(error.to_string()))?;
         }
-
-        let history_plan = options
-            .record_history
-            .then(|| {
-                guard.history.prepare_entry_with_gesture_ids(
-                    changed_fields.clone(),
-                    current.patch_for_fields(&changed_fields),
-                    changed_fields
-                        .contains(&EditorField::Keys)
-                        .then(|| current_store.key_counters.clone()),
-                    options.gesture_ids.clone(),
-                )
-            })
-            .transpose()
-            .map_err(|error| {
-                EditorCommitError::validation("HISTORY_SERIALIZATION_FAILED", error)
-            })?;
-
-        let revision = next_revision(current_store.editor_revision)?;
-        if options.apply_key_side_effects && changed_fields.contains(&EditorField::Keys) {
-            sync_key_counters(&mut scratch.key_counters, &candidate.keys);
-            repair_selected_mode(&mut scratch);
-        }
-        scratch.editor_revision = revision;
-        let selected_key_type = scratch.selected_key_type.clone();
-        let key_counters = scratch.key_counters.clone();
-
-        self.commit_locked(guard, scratch, ())
-            .map_err(|error| EditorCommitError::io(error.to_string()))?;
-
-        let history_status = history_plan.map(|plan| {
-            guard.history.apply_editor_record_plan(plan, &candidate);
-            guard.history.issue_status(self.history_gate.is_closed())
-        });
-        let event = options.origin.event_name().map(|origin| EditorCommittedV1 {
-            schema_version: EDITOR_SCHEMA_VERSION,
-            revision,
-            mutation_id: options.mutation_id,
-            gesture_id: options.gesture_id,
-            gesture_ids: options.gesture_ids,
-            origin,
-            changed_fields: changed_fields.clone(),
-            patch: candidate.patch_for_fields(&changed_fields),
-        });
-
-        Ok(CommittedEditorChange {
-            result: EditorCommitResult {
-                revision,
-                changed_fields,
-                op_results,
-            },
-            event,
-            replayed: false,
-            document: candidate,
-            selected_key_type,
-            key_counters,
-            history_status,
-            plugin_instances_changes: Vec::new(),
-            runtime_publication_generation: guard.revision,
-        })
+        let revision = guard.revision;
+        Ok(prepared.finalize(&mut guard.history, self.history_gate.is_closed(), revision))
     }
 }

@@ -1,5 +1,4 @@
 use std::{
-    collections::HashSet,
     fs::{self, File},
     io::Read,
     path::{Path, PathBuf},
@@ -13,7 +12,9 @@ use crate::{
 };
 
 pub(crate) const MAX_CUSTOM_CSS_BYTES: u64 = 1024 * 1024;
-pub(crate) const MAX_CUSTOM_CSS_HISTORY_ENTRIES: usize = 10;
+#[cfg(test)]
+const MAX_CUSTOM_CSS_HISTORY_ENTRIES: usize =
+    dmnote_editor_engine::css_history::MAX_CUSTOM_CSS_HISTORY_ENTRIES;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -135,35 +136,7 @@ pub(crate) fn inspect_css_history_status(path: &Path) -> CustomCssHistoryStatus 
     CustomCssHistoryStatus::Available
 }
 
-pub(crate) fn normalize_custom_css_history(history: &mut Vec<CustomCssHistoryEntry>) -> bool {
-    let original = history.clone();
-    history.retain(|entry| Path::new(&entry.path).is_absolute());
-    history.sort_by_key(|entry| std::cmp::Reverse(entry.loaded_at));
-
-    let mut seen = HashSet::with_capacity(history.len());
-    history.retain(|entry| seen.insert(path_identity_key(Path::new(&entry.path))));
-    while history.len() > MAX_CUSTOM_CSS_HISTORY_ENTRIES {
-        let eviction_index = history
-            .iter()
-            .enumerate()
-            .min_by_key(|(_, entry)| (entry.last_used_at, entry.loaded_at))
-            .map(|(index, _)| index)
-            .expect("CSS history must contain an eviction candidate");
-        history.remove(eviction_index);
-    }
-    history.sort_by_key(|entry| std::cmp::Reverse(entry.loaded_at));
-
-    *history != original
-}
-
-pub(crate) fn migrate_custom_css_history_timestamps(history: &mut [CustomCssHistoryEntry]) -> bool {
-    let mut changed = false;
-    for entry in history.iter_mut().filter(|entry| entry.loaded_at == 0) {
-        entry.loaded_at = entry.last_used_at;
-        changed = true;
-    }
-    changed
-}
+pub(crate) use dmnote_editor_engine::css_history::normalize_custom_css_history;
 
 pub(crate) fn record_custom_css_load(
     history: &mut Vec<CustomCssHistoryEntry>,
@@ -194,31 +167,6 @@ pub(crate) fn touch_custom_css_history(
     };
     entry.last_used_at = timestamp;
     true
-}
-
-pub(crate) fn migrate_custom_css_history_at_load(
-    history: &mut Vec<CustomCssHistoryEntry>,
-    active_path: Option<&str>,
-    timestamp: i64,
-) -> bool {
-    let original = history.clone();
-    migrate_custom_css_history_timestamps(history);
-
-    if let Some(path) = active_path.filter(|path| {
-        Path::new(path).is_absolute()
-            && !history
-                .iter()
-                .any(|entry| history_paths_match(&entry.path, path))
-    }) {
-        history.push(CustomCssHistoryEntry {
-            path: path.to_string(),
-            loaded_at: timestamp,
-            last_used_at: timestamp,
-        });
-    }
-
-    normalize_custom_css_history(history);
-    *history != original
 }
 
 pub(crate) fn history_paths_match(left: &str, right: &str) -> bool {

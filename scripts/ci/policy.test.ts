@@ -13,7 +13,7 @@ import { test } from 'node:test';
 import { gateErrors, parseChanges, planValidation } from './policy.ts';
 
 test('Draft 갱신은 빠른 검사, 같은 변경의 Ready 전환은 전체 검사', () => {
-  const changes = parseChanges('M\0src/types/editor.ts\0');
+  const changes = parseChanges('M\0packages/editor/src/types/editor.ts\0');
   assert.equal(planValidation('pull_request', true, changes).mode, 'draft');
   assert.equal(planValidation('pull_request', false, changes).mode, 'full');
 });

@@ -20,8 +20,11 @@ const onRollupWarning: Rollup.WarningHandlerWithDefault = (warning, warn) => {
 
 export default defineConfig(async () => {
   const projectRoot = __dirname;
-  const rendererRoot = path.resolve(projectRoot, 'src/renderer');
-  const windowsRoot = path.resolve(rendererRoot, 'windows');
+  const rendererRoot = path.resolve(
+    projectRoot,
+    'packages/editor/src/renderer',
+  );
+  const windowsRoot = path.resolve(projectRoot, 'src/renderer/windows');
   const isAnalyze = process.env.ANALYZE === 'true';
   const configuredPort = Number(process.env.DMN_VITE_PORT);
   const devServerPort =
@@ -85,9 +88,14 @@ export default defineConfig(async () => {
     },
     resolve: {
       alias: {
+        '@dmnote/editor': path.resolve(__dirname, 'packages/editor/src'),
+        '@dmnote/ipc-shim': path.resolve(
+          __dirname,
+          'packages/ipc-shim/src/index.ts',
+        ),
         '@components': path.resolve(rendererRoot, 'components'),
         '@styles': path.resolve(rendererRoot, 'styles'),
-        '@windows': path.resolve(rendererRoot, 'windows'),
+        '@windows': path.resolve(projectRoot, 'src/renderer/windows'),
         '@hooks': path.resolve(rendererRoot, 'hooks'),
         '@api': path.resolve(rendererRoot, 'api'),
         '@assets': path.resolve(rendererRoot, 'assets'),
@@ -97,8 +105,9 @@ export default defineConfig(async () => {
         '@contexts': path.resolve(rendererRoot, 'contexts'),
         '@plugins': path.resolve(rendererRoot, 'plugins'),
         '@config': path.resolve(rendererRoot, 'config'),
-        '@shared': path.resolve(projectRoot, 'src/types'),
-        '@src': path.resolve(projectRoot, 'src/'),
+        '@shared': path.resolve(projectRoot, 'packages/editor/src/types'),
+        '@src': path.resolve(projectRoot, 'packages/editor/src/'),
+        '@app': path.resolve(projectRoot, 'src/'),
       },
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
     },

@@ -11,24 +11,24 @@ import { useKnobItemStore } from '@stores/data/useKnobItemStore';
 import { useSpriteStore } from '@stores/data/useSpriteStore';
 import { useLayerGroupStore } from '@stores/data/useLayerGroupStore';
 import Dropdown from '@components/main/common/dropdown/Dropdown';
-import ReloadButton from '@components/main/common/ReloadButton';
+import ReloadButton from '@app/renderer/components/main/common/ReloadButton';
 import {
   SettingCard,
   SettingRow,
   SettingToggleRow,
-} from '@components/main/common/SettingRow';
-import { PluginDataDeleteModal } from '@components/main/Modal/content/dialogs/PluginDataDeleteModal';
-import { useDeferredHover } from '@hooks/ui/useDeferredHover';
+} from '@app/renderer/components/main/common/SettingRow';
+import { PluginDataDeleteModal } from '@app/renderer/components/main/Modal/content/dialogs/PluginDataDeleteModal';
+import { useDeferredHover } from '@app/renderer/hooks/ui/useDeferredHover';
 import { useRetainedWhileOpen } from '@hooks/ui/useRetainedValue';
-import SettingsPreview from '@components/main/SettingsPreview';
-import SettingsSidePanel from '@components/main/SettingsPanel/SettingsSidePanel';
-import type { SettingsPanelKey } from '@components/main/SettingsPanel/SettingsSidePanel';
-import ShortcutsPanelContent from '@components/main/SettingsPanel/ShortcutsPanelContent';
-import PluginsPanelContent from '@components/main/SettingsPanel/PluginsPanelContent';
-import CssPanelContent from '@components/main/SettingsPanel/CssPanelContent';
-import KeySoundOutputSettings from '@components/main/SettingsPanel/KeySoundOutputSettings';
-import { createSettingsPluginLifecycleController } from '@components/main/settingsPluginLifecycleController';
-import type { PluginToDelete } from '@components/main/settingsPluginLifecycleController';
+import SettingsPreview from '@app/renderer/components/main/SettingsPreview';
+import SettingsSidePanel from '@app/renderer/components/main/SettingsPanel/SettingsSidePanel';
+import type { SettingsPanelKey } from '@app/renderer/components/main/SettingsPanel/SettingsSidePanel';
+import ShortcutsPanelContent from '@app/renderer/components/main/SettingsPanel/ShortcutsPanelContent';
+import PluginsPanelContent from '@app/renderer/components/main/SettingsPanel/PluginsPanelContent';
+import CssPanelContent from '@app/renderer/components/main/SettingsPanel/CssPanelContent';
+import KeySoundOutputSettings from '@app/renderer/components/main/SettingsPanel/KeySoundOutputSettings';
+import { createSettingsPluginLifecycleController } from '@app/renderer/components/main/settingsPluginLifecycleController';
+import type { PluginToDelete } from '@app/renderer/components/main/settingsPluginLifecycleController';
 import {
   FILL_DISABLED_CLASS,
   FILL_INTERACTIVE_CLASS,
@@ -36,9 +36,9 @@ import {
 import { applyCounterSnapshot } from '@stores/signals/keyCounterSignals';
 import { getPluginDisplayName } from '@utils/plugin/components/pluginUtils';
 import { isMac } from '@utils/core/platform';
-import { useUpdateCheck } from '@hooks/app/useUpdateCheck';
-import { useObsSettingsController } from '@components/main/useObsSettingsController';
-import { useOverlayResizeAnchorController } from '@components/main/useOverlayResizeAnchorController';
+import { useUpdateCheck } from '@app/renderer/hooks/app/useUpdateCheck';
+import { useObsSettingsController } from '@app/renderer/components/main/useObsSettingsController';
+import { useOverlayResizeAnchorController } from '@app/renderer/components/main/useOverlayResizeAnchorController';
 import type { OverlayResizeAnchor } from '@src/types/settings/settings';
 import type { ShortcutsState } from '@src/types/settings/shortcuts';
 import type { SupportedLocale } from '@contexts/I18nContextDef';

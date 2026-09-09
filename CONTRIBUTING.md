@@ -22,7 +22,7 @@ DM Note에 관심을 가져주셔서 감사합니다! 이 문서는 프로젝트
 | 유형              | 설명                                                           |
 | ----------------- | -------------------------------------------------------------- |
 | 📝 문서 개선      | README, 가이드, API 문서 등의 오류 수정 및 보완                |
-| 🌍 번역           | 새로운 언어 추가 또는 기존 번역 개선 (`src/renderer/locales/`) |
+| 🌍 번역           | 새로운 언어 추가 또는 기존 번역 개선 (`packages/editor/src/renderer/locales/`) |
 | 🧩 플러그인 / CSS | 커뮤니티 플러그인이나 CSS 테마 제작 및 공유                    |
 
 > **참고**: 기능 추가나 큰 변경은 작업 전에 이슈를 열어 논의해주세요.
@@ -49,7 +49,8 @@ npm run tauri:dev
 ## 📂 프로젝트 구조
 
 ```
-src/renderer/          # React 프론트엔드
+packages/editor/src/   # 공통 React 편집기·타입·자산
+src/renderer/          # 데스크톱 창·설정·OBS 연결
 ├── components/        # UI 컴포넌트
 │   ├── main/         # 메인 윈도우 전용
 │   ├── overlay/      # 오버레이 윈도우 전용
@@ -69,7 +70,7 @@ src-tauri/src/         # Rust 백엔드
 
 ### 편집 런타임과 네이티브 상태
 
-`src/renderer/editor/runtime/`은 책임별로 나눕니다. `coordinator`는 커밋 조정·충돌 재조정, `projection`은 의미 연산의 문서 투영, `operations`는 요소 편집, `intent`는 편집 대상 결정, `geometry`는 배치 계산, `gesture`는 프리뷰·세션, `lifecycle`은 flush·쓰기 차단을 담당합니다. 테스트는 구현 옆에 둡니다. 커밋 엔진에 UI 스토어 의존성이 유입되지 않도록 소유 모듈을 직접 import하고 공통 barrel은 만들지 않습니다.
+`packages/editor/src/renderer/editor/runtime/`은 책임별로 나눕니다. `coordinator`는 커밋 조정·충돌 재조정, `projection`은 의미 연산의 문서 투영, `operations`는 요소 편집, `intent`는 편집 대상 결정, `geometry`는 배치 계산, `gesture`는 프리뷰·세션, `lifecycle`은 flush·쓰기 차단을 담당합니다. 테스트는 구현 옆에 둡니다. 커밋 엔진에 UI 스토어 의존성이 유입되지 않도록 소유 모듈을 직접 import하고 공통 barrel은 만들지 않습니다.
 
 `PropertiesPanel/`은 재사용 입력을 `controls`, 패널 탐색·외형을 `navigation`, 선택 어댑터를 `selection`, 플러그인 설정을 `plugin`으로 묶습니다. 기존 `single`·`batch`·`layer` 그룹은 유지합니다. 파일을 옮길 때 테스트도 구현과 함께 이동합니다.
 

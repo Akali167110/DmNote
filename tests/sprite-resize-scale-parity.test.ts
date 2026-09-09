@@ -2,11 +2,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { SPRITE_CONSTRAINTS } from '../src/types/key/sprites';
+import { SPRITE_CONSTRAINTS } from '../packages/editor/src/types/key/sprites';
 import {
   scaleSpriteResizeOffset,
   spriteResizeRatio,
-} from '../src/renderer/utils/sprite/resizeProjection';
+} from '../packages/editor/src/renderer/utils/sprite/resizeProjection';
 
 // Rust 적용기와 같은 fixture를 공유해 resizeSprite 스케일 수학의 f64 결과를
 // 비트 단위로 고정한다. 비교는 expectedHex(IEEE754 big-endian)로만 한다 -

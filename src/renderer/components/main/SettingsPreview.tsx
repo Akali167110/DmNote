@@ -1,7 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import FlaskIcon from '@assets/svgs/flask.svg';
 import { useTranslation } from '@contexts/useTranslation';
-import { PREVIEW_CLIPS, PREVIEW_KEYS } from '@constants/settingsPreviewClips';
+import {
+  PREVIEW_CLIPS,
+  PREVIEW_KEYS,
+} from '@app/renderer/constants/settingsPreviewClips';
 
 interface SettingsPreviewProps {
   /** 지금 가리키는 설정. 미리보기가 없는 항목이면 기본 화면으로 돌아간다 */

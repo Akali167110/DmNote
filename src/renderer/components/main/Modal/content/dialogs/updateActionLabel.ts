@@ -1,4 +1,4 @@
-import type { AutoUpdatePhase } from '@stores/useUpdateStore';
+import type { AutoUpdatePhase } from '@app/renderer/stores/useUpdateStore';
 
 type Translate = (
   key: string,

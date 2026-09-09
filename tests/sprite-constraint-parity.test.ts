@@ -13,9 +13,9 @@ import {
   spriteAnchorSchema,
   spriteImageMetricsSchema,
   spriteTransformSchema,
-} from '../src/types/key/sprites';
+} from '../packages/editor/src/types/key/sprites';
 
-// Rust 테스트(src-tauri models)와 같은 fixture를 공유해, 프론트 zod 경계와
+// 공통 Rust 엔진 models 테스트와 같은 fixture를 공유해, 프론트 zod 경계와
 // 백엔드 검증 상수가 기계적으로 일치함을 고정한다. 한쪽만 바뀌면 프론트가
 // 통과시킨 커밋을 백엔드가 거부하는(또는 역방향) 침묵 드리프트가 된다
 const FIXTURE_PATH = join(

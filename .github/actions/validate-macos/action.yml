@@ -22,10 +22,19 @@ runs:
       run: npm ci --no-audit --no-fund
     - working-directory: ${{ inputs.workspace }}/src-tauri
       shell: bash
-      run: cargo clippy --all-targets --locked -- -D warnings
+      run: cargo clippy --workspace --all-targets --locked -- -D warnings
     - working-directory: ${{ inputs.workspace }}/src-tauri
       shell: bash
-      run: cargo test --all-targets --locked
+      run: cargo test --workspace --all-targets --locked
+    - name: 공통 엔진 WASM 실행 검증
+      working-directory: ${{ inputs.workspace }}
+      shell: bash
+      run: |
+        rustup target add wasm32-unknown-unknown
+        cargo build --manifest-path src-tauri/Cargo.toml -p dmnote-editor-engine --target wasm32-unknown-unknown --locked
+        cargo install wasm-bindgen-cli --version 0.2.126 --locked
+        wasm-bindgen --target nodejs --out-dir src-tauri/target/wasm-node src-tauri/target/wasm32-unknown-unknown/debug/dmnote_editor_engine.wasm
+        node --experimental-strip-types src-tauri/crates/editor-engine/tests/wasm-smoke.ts src-tauri/target/wasm-node/dmnote_editor_engine.js
     - name: PR 앱 번들 검증
       working-directory: ${{ inputs.workspace }}
       shell: bash
@@ -39,7 +48,7 @@ runs:
       if: inputs.extended == 'true'
       run: |
         rustup target add aarch64-apple-darwin x86_64-apple-darwin
-        cargo test --manifest-path src-tauri/Cargo.toml --doc --locked
+        cargo test --manifest-path src-tauri/Cargo.toml --workspace --doc --locked
         npm run tauri:build:mac:universal -- --bundles app --no-sign --ci -- --locked
         bash scripts/verify-macos-bundle.sh "src-tauri/target/universal-apple-darwin/release/bundle/macos/DM NOTE.app"
     - name: 생성 permissions 확인

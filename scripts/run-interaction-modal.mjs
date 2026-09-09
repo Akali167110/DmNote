@@ -61,7 +61,11 @@ if (visualImprovement === null || visualImprovement <= 0) {
 
 const correctness = spawnSync(
   npxCommand,
-  ['vitest', 'run', 'src/renderer/components/main/Modal/Modal.test.tsx'],
+  [
+    'vitest',
+    'run',
+    'packages/editor/src/renderer/components/main/Modal/Modal.test.tsx',
+  ],
   { cwd: root, stdio: 'inherit' },
 );
 if (correctness.status !== 0) process.exit(correctness.status ?? 1);
@@ -73,7 +77,7 @@ const implementationCommit = execFileSync(
     '-1',
     '--format=%H',
     '--',
-    'src/renderer/components/main/Modal/Modal.tsx',
+    'packages/editor/src/renderer/components/main/Modal/Modal.tsx',
   ],
   { cwd: root, encoding: 'utf8' },
 ).trim();

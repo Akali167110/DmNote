@@ -5,6 +5,7 @@ benchmarks/results/PILOT-01-latest.json
 .roo
 copilot-instructions.md
 src-tauri/target
+src-tauri/crates/*/target
 .DS_Store
 .claude/settings.local.json
 
@@ -21,3 +22,6 @@ tasks/
 
 # 미리보기 클립 제작 워크스페이스. 로컬에서만 돌리고 결과 mp4만 커밋한다
 video/
+
+# 공통 패키지 빌드 산출물
+packages/*/dist/

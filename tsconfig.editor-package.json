@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "./packages/editor/src",
+    "outDir": "./packages/editor/dist/types"
+  },
+  "include": [
+    "packages/editor/src/*.ts",
+    "packages/editor/src/types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "packages/*/dist",
+    "packages/editor/src/**/*.test.ts",
+    "packages/editor/src/**/*.test.tsx"
+  ]
+}

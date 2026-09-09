@@ -6,10 +6,10 @@ import { useCustomCssInjection } from '@hooks/app/useCustomCssInjection';
 import { useCustomJsInjection } from '@hooks/app/useCustomJsInjection';
 import { useBlockBrowserShortcuts } from '@hooks/app/useBlockBrowserShortcuts';
 import { useNoteSystem } from '@hooks/overlay/useNoteSystem';
-import { useOverlayHitRegions } from '@hooks/overlay/useOverlayHitRegions';
-import { useOverlayContextMenuRuntime } from '@hooks/overlay/useOverlayContextMenuRuntime';
-import { useTrackReserveTransition } from '@hooks/overlay/useTrackReserveTransition';
-import { useOverlayReveal } from '@hooks/overlay/useOverlayReveal';
+import { useOverlayHitRegions } from '@app/renderer/hooks/overlay/useOverlayHitRegions';
+import { useOverlayContextMenuRuntime } from '@app/renderer/hooks/overlay/useOverlayContextMenuRuntime';
+import { useTrackReserveTransition } from '@app/renderer/hooks/overlay/useTrackReserveTransition';
+import { useOverlayReveal } from '@app/renderer/hooks/overlay/useOverlayReveal';
 import { useOverlayKeyStateRuntime } from '@hooks/overlay/useOverlayKeyStateRuntime';
 import { useAppBootstrap } from '@hooks/app/useAppBootstrap';
 import { overlayApi } from '@api/modules/window/overlayApi';
@@ -26,7 +26,7 @@ import {
   selectPluginLayoutElements,
   pluginLayoutElementsEqual,
 } from '@utils/plugin/layout/pluginLayoutElements';
-import OverlayScene from '@components/shared/OverlayScene';
+import { OverlayScene } from '@dmnote/editor/overlay';
 import { computeLayout } from '@hooks/shared/useLayoutComputation';
 import { buildSpriteKeyCanonicalMap } from '@utils/sprite/spriteKeyBinding';
 

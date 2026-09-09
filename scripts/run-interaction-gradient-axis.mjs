@@ -68,9 +68,9 @@ const correctness = spawnSync(
   [
     'vitest',
     'run',
-    'src/renderer/__tests__/rendering/gradientAxisHandle.test.tsx',
-    'src/renderer/__tests__/editor/gradientEditStore.test.tsx',
-    'src/renderer/utils/animation/rafLatestScheduler.test.ts',
+    'packages/editor/src/renderer/__tests__/rendering/gradientAxisHandle.test.tsx',
+    'packages/editor/src/renderer/__tests__/editor/gradientEditStore.test.tsx',
+    'packages/editor/src/renderer/utils/animation/rafLatestScheduler.test.ts',
   ],
   { cwd: root, stdio: 'inherit' },
 );
@@ -83,7 +83,7 @@ const implementation = execFileSync(
     '-1',
     '--format=%H',
     '--',
-    'src/renderer/components/main/Grid/handles/GradientAxisHandle.tsx',
+    'packages/editor/src/renderer/components/main/Grid/handles/GradientAxisHandle.tsx',
   ],
   { cwd: root, encoding: 'utf8' },
 ).trim();

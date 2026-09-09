@@ -4,11 +4,17 @@
     "strict": true
   },
   "include": [
-    "src/types/**/*.ts",
-    "src/renderer/editor/model/**/*.ts",
-    "src/renderer/editor/runtime/coordinator/editorCoordinator.ts",
-    "src/renderer/editor/runtime/projection/**/*.ts",
-    "src/renderer/editor/runtime/geometry/batchGeometryPlan.ts"
+    "packages/editor/src/types/**/*.ts",
+    "packages/editor/src/renderer/editor/model/**/*.ts",
+    "packages/editor/src/renderer/editor/runtime/coordinator/editorCoordinator.ts",
+    "packages/editor/src/renderer/editor/runtime/projection/**/*.ts",
+    "packages/editor/src/renderer/editor/runtime/geometry/batchGeometryPlan.ts"
   ],
-  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/*.test.tsx"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "packages/editor/src/**/*.test.ts",
+    "packages/editor/src/**/*.test.tsx",
+    "packages/*/dist"
+  ]
 }

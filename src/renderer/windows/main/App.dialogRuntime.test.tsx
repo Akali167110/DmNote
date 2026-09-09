@@ -45,7 +45,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@contexts/useTranslation', () => ({
   useTranslation: () => ({ t: mocks.t }),
 }));
-vi.mock('@components/main/TitleBar', () => ({ default: () => null }));
+vi.mock('@app/renderer/components/main/TitleBar', () => ({
+  default: () => null,
+}));
 vi.mock('@components/main/EditorSaveNotice', () => ({
   default: () => null,
 }));
@@ -58,12 +60,14 @@ vi.mock('@hooks/app/useCustomJsInjection', () => ({
 vi.mock('@hooks/app/useBlockBrowserShortcuts', () => ({
   useBlockBrowserShortcuts: vi.fn(),
 }));
-vi.mock('@hooks/panel/usePanelCloseRequest', () => ({
+vi.mock('@app/renderer/hooks/panel/usePanelCloseRequest', () => ({
   usePanelCloseRequest: vi.fn(),
 }));
 vi.mock('@components/main/Tool/ToolBar', () => ({ default: () => null }));
 vi.mock('@components/main/Grid', () => ({ default: () => null }));
-vi.mock('@components/main/Settings', () => ({ default: () => null }));
+vi.mock('@app/renderer/components/main/Settings', () => ({
+  default: () => null,
+}));
 vi.mock('@hooks/useKeyManager', () => ({
   useKeyManager: () => ({
     keyMappings: { '4key': [] },
@@ -93,12 +97,18 @@ vi.mock('@components/main/Modal/content/dialogs/Alert', () => ({
 vi.mock('@components/main/Modal/content/settings/NoteSetting', () => ({
   default: () => null,
 }));
-vi.mock('@components/main/Modal/content/dialogs/UpdateModal', () => ({
-  default: () => null,
-}));
-vi.mock('@components/main/Modal/content/dialogs/updateActionLabel', () => ({
-  resolveAutoUpdateActionLabel: () => 'update',
-}));
+vi.mock(
+  '@app/renderer/components/main/Modal/content/dialogs/UpdateModal',
+  () => ({
+    default: () => null,
+  }),
+);
+vi.mock(
+  '@app/renderer/components/main/Modal/content/dialogs/updateActionLabel',
+  () => ({
+    resolveAutoUpdateActionLabel: () => 'update',
+  }),
+);
 vi.mock('@components/main/Grid/PropertiesPanelHost', () => ({
   default: () => null,
 }));
@@ -155,7 +165,7 @@ vi.mock('@hooks/app/useAppBootstrap', () => ({ useAppBootstrap: vi.fn() }));
 vi.mock('@hooks/app/usePluginDisplayElementsResponder', () => ({
   usePluginDisplayElementsResponder: vi.fn(),
 }));
-vi.mock('@hooks/app/useUpdateCheck', () => ({
+vi.mock('@app/renderer/hooks/app/useUpdateCheck', () => ({
   UpdateInstalledRestartFailedError: class extends Error {
     originalError: unknown;
     constructor(originalError: unknown) {

@@ -6,12 +6,12 @@ import {
   DEFAULT_ELEMENT_ROTATION,
   ELEMENT_ROTATION_RANGE,
   elementRotationSchema,
-} from '../src/types/key/rotation';
-import { IMAGE_TRANSFORM_CONSTRAINTS } from '../src/types/key/imageLayer';
-import { SPRITE_CONSTRAINTS } from '../src/types/key/sprites';
-import { keyPositionSchema } from '../src/types/key/keys';
+} from '../packages/editor/src/types/key/rotation';
+import { IMAGE_TRANSFORM_CONSTRAINTS } from '../packages/editor/src/types/key/imageLayer';
+import { SPRITE_CONSTRAINTS } from '../packages/editor/src/types/key/sprites';
+import { keyPositionSchema } from '../packages/editor/src/types/key/keys';
 
-// Rust 테스트(src-tauri models)와 같은 fixture를 공유해 요소 회전 범위·기본값이
+// 공통 Rust 엔진 models 테스트와 같은 fixture를 공유해 요소 회전 범위·기본값이
 // 프론트 zod 경계와 백엔드 검증 상수에서 기계적으로 일치함을 고정한다
 const FIXTURE_PATH = join(
   __dirname,
@@ -65,11 +65,11 @@ describe('element rotation parity', () => {
     expect(
       keyPositionSchema.safeParse({ ...base, rotation: 45.5 }).success,
     ).toBe(true);
-    expect(keyPositionSchema.safeParse({ ...base, rotation: null }).success).toBe(
-      false,
-    );
-    expect(keyPositionSchema.safeParse({ ...base, rotation: 181 }).success).toBe(
-      false,
-    );
+    expect(
+      keyPositionSchema.safeParse({ ...base, rotation: null }).success,
+    ).toBe(false);
+    expect(
+      keyPositionSchema.safeParse({ ...base, rotation: 181 }).success,
+    ).toBe(false);
   });
 });

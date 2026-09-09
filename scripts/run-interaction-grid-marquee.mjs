@@ -57,7 +57,11 @@ if (gain === null || gain <= 0) {
 }
 const correctness = spawnSync(
   npx,
-  ['vitest', 'run', 'src/renderer/hooks/Grid/selection/useGridMarquee.test.tsx'],
+  [
+    'vitest',
+    'run',
+    'packages/editor/src/renderer/hooks/Grid/selection/useGridMarquee.test.tsx',
+  ],
   { cwd: root, stdio: 'inherit' },
 );
 if (correctness.status !== 0) process.exit(correctness.status ?? 1);
@@ -68,7 +72,7 @@ const implementation = execFileSync(
     '-1',
     '--format=%H',
     '--',
-    'src/renderer/hooks/Grid/selection/useGridMarquee.ts',
+    'packages/editor/src/renderer/hooks/Grid/selection/useGridMarquee.ts',
   ],
   { cwd: root, encoding: 'utf8' },
 ).trim();

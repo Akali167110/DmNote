@@ -1,3 +1,4 @@
+use super::imported_assets::prepare_tab_preset_fonts;
 use super::*;
 use crate::{
     defaults::{default_keys, default_positions},
@@ -7,6 +8,15 @@ use crate::{
         SpriteImageMetrics, SpritePose, SpriteReferenceNaturalSize, StatPosition, StatType,
     },
 };
+use crate::{
+    models::{
+        CustomCssPatch, CustomJs, KeyMappings, KeyPosition, KeySlot, NoteSettings,
+        SettingsPatchInput, TabNoteSettings, POSITION_COLLECTION_FIELDS,
+    },
+    services::settings::apply_patch_to_store,
+};
+use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine as _};
+use dmnote_editor_engine::preset::{PRESET_LOCAL_IMAGE_PREFIX, PRESET_LOCAL_SOUND_PREFIX};
 
 fn png_header(width: u32, height: u32) -> Vec<u8> {
     let mut bytes = b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR".to_vec();

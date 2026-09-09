@@ -22,7 +22,7 @@ import {
   PANEL_TOKEN_CHIP_CLASS,
   PANEL_TOKEN_REMOVE_CLASS,
 } from '@components/main/SettingsPanel/panelChrome';
-import { SettingToggleRow } from '@components/main/common/SettingRow';
+import { SettingToggleRow } from '@app/renderer/components/main/common/SettingRow';
 import { SETTINGS_LABEL_CLASS, SETTINGS_ROW_CLASS } from '@utils/cardRecipes';
 import ListPopup from '@components/main/Modal/listPopup/ListPopup';
 import { usePickerItemMenu } from '@hooks/usePickerItemMenu';

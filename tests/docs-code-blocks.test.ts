@@ -20,7 +20,16 @@ const collectPageFiles = (dir: string): string[] => {
 const pageFiles = collectPageFiles(DOCS_ROOT);
 
 const i18nApiSource = readFileSync(
-  join(__dirname, '..', 'src', 'types', 'plugin', 'api.ts'),
+  join(
+    __dirname,
+    '..',
+    'packages',
+    'editor',
+    'src',
+    'types',
+    'plugin',
+    'api.ts',
+  ),
   'utf8',
 );
 const i18nContract = i18nApiSource.match(/\n  i18n: \{([\s\S]*?)\n  \};/);

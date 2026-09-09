@@ -90,7 +90,7 @@ def main():
         assert len(keys[mode]) == len(positions[mode]), mode
 
     def dump(name, data):
-        path = os.path.join(ROOT, 'src-tauri', name)
+        path = os.path.join(ROOT, 'src-tauri', 'crates', 'editor-engine', name)
         with open(path, 'w') as handle:
             json.dump(data, handle, ensure_ascii=False, separators=(',', ':'))
             handle.write('\n')

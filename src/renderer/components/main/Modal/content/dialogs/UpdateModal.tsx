@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from '@contexts/useTranslation';
-import Modal from '../../Modal';
+import Modal from '../../../../../../../packages/editor/src/renderer/components/main/Modal/Modal';
 import { useSingleFlightAction } from '@hooks/useSingleFlightAction';
 import { useModalPresence } from '@hooks/ui/usePopupPresence';
 import { appApi } from '@api/modules/app/appApi';

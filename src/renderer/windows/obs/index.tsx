@@ -2,7 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import '@styles/tokens.css';
 import '@styles/global.css';
-import { initIpcShim, disposeIpcShim } from '@api/ipcShim';
+import { initIpcShim, disposeIpcShim } from '@app/renderer/api/ipcShim';
 
 async function bootstrap() {
   window.__dmn_window_type = 'overlay';
@@ -20,11 +20,11 @@ async function bootstrap() {
     await initIpcShim(wsUrl, token);
 
     // 2. window.api 설치 (shim 위에서 동작)
-    await import('@api/dmnoteApi');
+    await import('@dmnote/editor/install');
 
     // 3. overlay/App.tsx를 I18nProvider로 래핑하여 렌더
     const { I18nProvider } = await import('@contexts/I18nContext');
-    const { default: App } = await import('@src/renderer/windows/overlay/App');
+    const { default: App } = await import('@app/renderer/windows/overlay/App');
 
     const container = document.getElementById('root')!;
     const root = createRoot(container);

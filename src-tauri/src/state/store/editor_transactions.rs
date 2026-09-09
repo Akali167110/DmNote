@@ -31,42 +31,7 @@ pub(super) fn editor_error_outcome(code: EditorCommitErrorCode) -> &'static str 
     }
 }
 
-pub(super) fn prepare_editor_patch_transition(
-    current_store: &AppStoreData,
-    changes: &crate::models::EditorPatchV1,
-    touched_fields: &[EditorField],
-) -> std::result::Result<
-    (
-        EditorDocumentV1,
-        EditorDocumentV1,
-        AppStoreData,
-        Vec<EditorField>,
-    ),
-    EditorCommitError,
-> {
-    let current = EditorDocumentV1::from_store(current_store);
-    let mut candidate = current.clone();
-    candidate.apply_patch(changes);
-
-    let mut scratch = current_store.clone();
-    candidate.apply_to_store(&mut scratch);
-    crate::state::migration::canonicalize_gradient_pairs(&mut scratch);
-    crate::state::migration::canonicalize_image_modes(&mut scratch);
-    crate::state::migration::normalize_sprite_triggers(&mut scratch);
-    candidate = EditorDocumentV1::from_store(&scratch);
-
-    validate_paired_update(
-        &current,
-        &candidate,
-        touched_fields.contains(&EditorField::Keys),
-        touched_fields.contains(&EditorField::KeyPositions),
-    )?;
-    scratch.editor_revision = current_store.editor_revision;
-    validate_document_transition(&current, &candidate, current_store, &scratch)?;
-    let changed_fields = current.changed_fields(&candidate);
-
-    Ok((current, candidate, scratch, changed_fields))
-}
+pub(super) use dmnote_editor_engine::commit::prepare_editor_patch_transition;
 
 pub(super) fn require_history_entry(plan: HistoryRecordPlan) -> Result<HistoryEntry, String> {
     match plan {

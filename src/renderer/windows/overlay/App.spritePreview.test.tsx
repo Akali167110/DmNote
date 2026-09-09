@@ -81,7 +81,7 @@ vi.mock('@stores/data/useKnobItemStore', () => ({
     selector: (state: { positions: Record<string, never[]> }) => T,
   ) => selector({ positions: {} }),
 }));
-vi.mock('@hooks/overlay/useOverlayHitRegions', () => ({
+vi.mock('@app/renderer/hooks/overlay/useOverlayHitRegions', () => ({
   useOverlayHitRegions: () => {},
   subscribeHitContextMenu: () => () => {},
 }));

@@ -9,12 +9,12 @@ import {
   transformedBoxCorners,
   type MeasuredHitBox,
   type TransformStyleReader,
-} from '@utils/overlay/hitRegionShape';
+} from '@app/renderer/utils/overlay/hitRegionShape';
 import { borderBoxSize } from '@utils/dom/borderBoxSize';
 import {
   sampleHitAnimations,
   type HitAnimationSamples,
-} from '@utils/overlay/hitRegionAnimations';
+} from '@app/renderer/utils/overlay/hitRegionAnimations';
 
 export interface HitRegionRect {
   x: number;

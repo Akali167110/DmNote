@@ -2,11 +2,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { EDITOR_OPS_VERSION } from '../src/types/editor';
+import { EDITOR_OPS_VERSION } from '../packages/editor/src/types/editor';
 import {
   createEditorCoordinator,
   getChangedEditorFields,
-} from '../src/renderer/editor/runtime/coordinator/editorCoordinator';
+} from '../packages/editor/src/renderer/editor/runtime/coordinator/editorCoordinator';
 
 import type {
   CanonicalEditorDocumentV1,
@@ -15,8 +15,8 @@ import type {
   EditorGetResult,
   EditorOpResultV1,
   EditorOpV1,
-} from '../src/types/editor';
-import type { EditorCoordinatorTransport } from '../src/renderer/editor/runtime/coordinator/editorCoordinator';
+} from '../packages/editor/src/types/editor';
+import type { EditorCoordinatorTransport } from '../packages/editor/src/renderer/editor/runtime/coordinator/editorCoordinator';
 
 // Rust 테스트(src-tauri/src/state/editor_ops_parity.rs)와 같은 fixture를
 // 공유해 "같은 op 시퀀스 -> 같은 문서" 결과 동등성을 양 구현에 고정한다.

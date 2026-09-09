@@ -38,11 +38,11 @@ runs:
     - name: ASIO Clippy
       shell: bash
       working-directory: ${{ inputs.workspace }}/src-tauri
-      run: cargo clippy --all-targets --locked --features asio-backend -- -D warnings
+      run: cargo clippy --workspace --all-targets --locked --features asio-backend -- -D warnings
     - name: ASIO 전체 Rust 테스트
       shell: bash
       working-directory: ${{ inputs.workspace }}/src-tauri
-      run: cargo nextest run --all-targets --locked --features asio-backend --no-fail-fast --no-tests=fail --retries 0
+      run: cargo nextest run --workspace --all-targets --locked --features asio-backend --no-fail-fast --no-tests=fail --retries 0
     - name: PR 앱 빌드
       working-directory: ${{ inputs.workspace }}
       shell: bash
@@ -58,10 +58,10 @@ runs:
       working-directory: ${{ inputs.workspace }}/src-tauri
       shell: bash
       run: |
-        cargo clippy --all-targets --locked -- -D warnings
-        cargo nextest run --all-targets --locked --no-fail-fast --no-tests=fail --retries 0
-        cargo test --doc --locked
-        cargo test --doc --locked --features asio-backend
+        cargo clippy --workspace --all-targets --locked -- -D warnings
+        cargo nextest run --workspace --all-targets --locked --no-fail-fast --no-tests=fail --retries 0
+        cargo test --workspace --doc --locked
+        cargo test --workspace --doc --locked --features asio-backend
     - name: ASIO 미사용 배포 빌드
       working-directory: ${{ inputs.workspace }}
       shell: bash

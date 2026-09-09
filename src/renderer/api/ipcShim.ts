@@ -10,6 +10,7 @@
  * - allow 리스트는 hello_ack에서 수신 (백엔드가 유일한 source of truth)
  */
 
+import { createIpcShim } from '@dmnote/ipc-shim';
 import { OBS_PROTOCOL_VERSION } from '@src/types/obs';
 import type { ObsEnvelope, HelloAckPayload } from '@src/types/obs';
 
@@ -29,26 +30,8 @@ let allowList: string[] = [];
 // hello_ack 수신 전에는 백엔드 이중 검사에 위임 (fail-open은 프론트 한정, 경계는 백엔드)
 let allowListReceived = false;
 
-// 콜백 레지스트리 (transformCallback/runCallback)
-const callbacks = new Map<number, (data: unknown) => void>();
-
-// 이벤트 리스너 레지스트리 (plugin:event|listen)
-// eventId → { event, handlerId }
-const eventListeners = new Map<number, { event: string; handlerId: number }>();
-// event → Set<eventId>
-const eventListenersByName = new Map<string, Set<number>>();
-
-let nextEventId = 1;
 let seqCounter = 0;
-
-// WS RPC 대기 중인 요청
-const pendingRpc = new Map<
-  string,
-  { resolve: (value: unknown) => void; reject: (reason: unknown) => void }
->();
-
-// snapshot 수신 여부 (initIpcShim에서 연결 준비 확인용)
-let _snapshotReceived = false;
+let shim: ReturnType<typeof createIpcShim>;
 
 // ── allow 체크 ──
 
@@ -56,92 +39,6 @@ let _snapshotReceived = false;
 function isAllowed(cmd: string): boolean {
   if (!allowListReceived) return true;
   return allowList.includes(cmd);
-}
-
-// ── 콜백 관리 (transformCallback / runCallback) ──
-
-function registerCallback(
-  callback?: (data: unknown) => void,
-  once = false,
-): number {
-  const id = crypto.getRandomValues(new Uint32Array(1))[0];
-  callbacks.set(id, (data: unknown) => {
-    if (once) {
-      callbacks.delete(id);
-    }
-    callback?.(data);
-  });
-  return id;
-}
-
-function unregisterCallback(id: number) {
-  callbacks.delete(id);
-}
-
-function runCallback(id: number, data: unknown) {
-  const callback = callbacks.get(id);
-  if (callback) {
-    callback(data);
-  }
-}
-
-// ── 이벤트 시스템 (plugin:event|listen/unlisten) ──
-
-function handleEventListen(args: Record<string, unknown>): number {
-  const event = args.event as string;
-  const handlerId = args.handler as number;
-  const eventId = nextEventId++;
-
-  eventListeners.set(eventId, { event, handlerId });
-
-  if (!eventListenersByName.has(event)) {
-    eventListenersByName.set(event, new Set());
-  }
-  eventListenersByName.get(event)!.add(eventId);
-
-  return eventId;
-}
-
-function handleEventUnlisten(args: Record<string, unknown>) {
-  const event = args.event as string;
-  const eventId = args.eventId as number;
-
-  const entry = eventListeners.get(eventId);
-  if (entry) {
-    unregisterCallback(entry.handlerId);
-    eventListeners.delete(eventId);
-  }
-
-  const nameSet = eventListenersByName.get(event);
-  if (nameSet) {
-    nameSet.delete(eventId);
-    if (nameSet.size === 0) {
-      eventListenersByName.delete(event);
-    }
-  }
-}
-
-function handleEventEmit(args: Record<string, unknown>) {
-  const event = args.event as string;
-  const payload = args.payload;
-  dispatchEvent(event, payload);
-}
-
-/** 내부: 등록된 모든 리스너에게 이벤트 디스패치 */
-function dispatchEvent(event: string, payload: unknown) {
-  const listenerIds = eventListenersByName.get(event);
-  if (!listenerIds) return;
-
-  for (const eventId of listenerIds) {
-    const entry = eventListeners.get(eventId);
-    if (entry) {
-      runCallback(entry.handlerId, {
-        event,
-        id: eventId,
-        payload,
-      });
-    }
-  }
 }
 
 // ── WS 메시지 수신 → Tauri 이벤트 디스패치 ──
@@ -154,7 +51,7 @@ function onWsMessage(envelope: ObsEnvelope) {
         event: string;
         data: unknown;
       };
-      dispatchEvent(event, data);
+      shim.dispatchEvent(event, data);
       break;
     }
 
@@ -165,15 +62,15 @@ function onWsMessage(envelope: ObsEnvelope) {
         result?: unknown;
         error?: string;
       };
-      const pending = pendingRpc.get(resp.requestId);
-      if (pending) {
-        pendingRpc.delete(resp.requestId);
-        if (resp.error) {
-          pending.reject(new Error(resp.error));
-        } else {
-          pending.resolve(resp.result);
-        }
-      }
+      shim.receiveResponse(
+        resp.error
+          ? {
+              requestId: resp.requestId,
+              ok: false,
+              error: new Error(resp.error),
+            }
+          : { requestId: resp.requestId, ok: true, result: resp.result },
+      );
       break;
     }
 
@@ -181,8 +78,7 @@ function onWsMessage(envelope: ObsEnvelope) {
       // 재연결/lag 복구 시 snapshot 수신 — 내용은 버리고 재동기화 신호만 발행
       // 'obs:resync'는 shim 로컬 합성 이벤트 (백엔드 emit 아님 —
       // register_event_forwarding 등록 금지, 네이티브에서는 발화하지 않음)
-      _snapshotReceived = true;
-      dispatchEvent('obs:resync', null);
+      shim.dispatchEvent('obs:resync', null);
       break;
     }
   }
@@ -200,55 +96,6 @@ function sendWsMessage(type: string, payload: unknown = null) {
     payload,
   };
   ws.send(JSON.stringify(envelope));
-}
-
-// ── invoke 핸들러 ──
-
-async function shimInvoke(
-  cmd: string,
-  args: Record<string, unknown> = {},
-  _options?: unknown,
-): Promise<unknown> {
-  // 1. 이벤트 플러그인 커맨드 (프론트엔드 로컬)
-  if (cmd === 'plugin:event|listen') {
-    return handleEventListen(args);
-  }
-  if (cmd === 'plugin:event|unlisten') {
-    handleEventUnlisten(args);
-    return;
-  }
-  if (cmd === 'plugin:event|emit' || cmd === 'plugin:event|emit_to') {
-    handleEventEmit(args);
-    return;
-  }
-
-  // 2. allow 체크 (hello_ack에서 수신한 리스트)
-  // 차단은 거절로 알린다. undefined resolve는 호출자에게 성공으로 보여
-  // 예컨대 dmn.plugin.storage.clear()가 아무것도 지우지 않고 성공한다
-  if (!isAllowed(cmd)) {
-    return Promise.reject(
-      new Error(`[IPC Shim] command is not available in OBS mode: ${cmd}`),
-    );
-  }
-
-  // 3. WS RPC (백엔드가 처리)
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    return Promise.reject(new Error(`[IPC Shim] WS not connected: ${cmd}`));
-  }
-
-  const requestId = `rpc_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  return new Promise((resolve, reject) => {
-    pendingRpc.set(requestId, { resolve, reject });
-    sendWsMessage('invoke_request', { requestId, command: cmd, args });
-
-    // 타임아웃 10초
-    setTimeout(() => {
-      if (pendingRpc.has(requestId)) {
-        pendingRpc.delete(requestId);
-        reject(new Error(`[IPC Shim] RPC timeout: ${cmd}`));
-      }
-    }, 10000);
-  });
 }
 
 // ── convertFileSrc shim ──
@@ -285,6 +132,31 @@ export function initIpcShim(wsUrl: string, token: string): Promise<void> {
     connPort = '34891';
   }
   connToken = token;
+  shim = createIpcShim({
+    transport: {
+      sendInvoke: (request) => {
+        // hello_ack의 정확 일치 검사, 최종 권한 경계는 기존 OBS 백엔드
+        if (!isAllowed(request.command)) {
+          throw new Error(
+            `[IPC Shim] command is not available in OBS mode: ${request.command}`,
+          );
+        }
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          throw new Error(`[IPC Shim] WS not connected: ${request.command}`);
+        }
+        sendWsMessage('invoke_request', request);
+      },
+    },
+    convertFileSrc: shimConvertFileSrc,
+    metadata: {
+      currentWindow: { label: 'obs-overlay' },
+      currentWebview: { windowLabel: 'obs-overlay', label: 'obs-overlay' },
+    },
+    requestTimeout: {
+      milliseconds: 10000,
+      error: (command) => new Error(`[IPC Shim] RPC timeout: ${command}`),
+    },
+  });
 
   return new Promise((resolve, reject) => {
     let resolved = false;
@@ -351,8 +223,7 @@ export function initIpcShim(wsUrl: string, token: string): Promise<void> {
 
         // snapshot 수신 시 글로벌 설치 후 resolve
         if (envelope.type === 'snapshot' && !resolved) {
-          _snapshotReceived = true;
-          installGlobals();
+          shim.installGlobals(window, globalThis);
           resolved = true;
           resolve();
           return;
@@ -392,35 +263,6 @@ export function initIpcShim(wsUrl: string, token: string): Promise<void> {
   });
 }
 
-/** 글로벌 객체에 shim 설치 */
-function installGlobals() {
-  // __TAURI_INTERNALS__
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).__TAURI_INTERNALS__ = {
-    invoke: shimInvoke,
-    transformCallback: registerCallback,
-    unregisterCallback,
-    runCallback,
-    callbacks,
-    convertFileSrc: shimConvertFileSrc,
-    metadata: {
-      currentWindow: { label: 'obs-overlay' },
-      currentWebview: { windowLabel: 'obs-overlay', label: 'obs-overlay' },
-    },
-  };
-
-  // __TAURI_EVENT_PLUGIN_INTERNALS__
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).__TAURI_EVENT_PLUGIN_INTERNALS__ = {
-    unregisterListener: (event: string, eventId: number) => {
-      handleEventUnlisten({ event, eventId });
-    },
-  };
-
-  // isTauri 플래그 (isTauri() 함수가 참조)
-  (globalThis as Record<string, unknown>).isTauri = true;
-}
-
 /** shim 해제 */
 export function disposeIpcShim() {
   disposed = true;
@@ -435,16 +277,7 @@ export function disposeIpcShim() {
     ws = null;
   }
 
-  // 대기 중인 RPC 전부 reject
-  for (const [id, pending] of pendingRpc) {
-    pending.reject(new Error('[IPC Shim] Disposed'));
-    pendingRpc.delete(id);
-  }
-
-  callbacks.clear();
-  eventListeners.clear();
-  eventListenersByName.clear();
+  shim?.dispose();
   allowList = [];
   allowListReceived = false;
-  _snapshotReceived = false;
 }

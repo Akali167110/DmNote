@@ -2,11 +2,18 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { hexRepresentative, isStrictStopColor } from '../src/types/color';
+import {
+  hexRepresentative,
+  isStrictStopColor,
+} from '../packages/editor/src/types/color';
 
-// Rust 경계(src-tauri/src/models/mod.rs의 note border 스톱 색 검증)와 같은
+// 공통 Rust 엔진 models/mod.rs의 note border 스톱 색 검증과 같은
 // fixture를 공유해 §2A 색 문법과 hex 대표색 변환의 양 언어 parity를 고정한다
-const FIXTURE_PATH = join(__dirname, 'fixtures', 'note-border-stop-colors.json');
+const FIXTURE_PATH = join(
+  __dirname,
+  'fixtures',
+  'note-border-stop-colors.json',
+);
 
 interface StopColorFixture {
   valid: Array<{ input: string; representative: string }>;

@@ -60,7 +60,7 @@ async function bootstrap() {
     { capture: true },
   );
 
-  await import('@api/dmnoteApi');
+  await import('@dmnote/editor/install');
   const [{ createRoot }, { I18nProvider }, { default: App }] =
     await Promise.all([
       import('react-dom/client'),

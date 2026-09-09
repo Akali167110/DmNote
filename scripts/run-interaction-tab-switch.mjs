@@ -85,7 +85,11 @@ if (visualImprovement === null || visualImprovement <= 0) {
 
 const correctnessResult = spawnSync(
   npxCommand,
-  ['vitest', 'run', 'src/renderer/components/main/common/TabSwitch.test.tsx'],
+  [
+    'vitest',
+    'run',
+    'packages/editor/src/renderer/components/main/common/TabSwitch.test.tsx',
+  ],
   { cwd: root, stdio: 'inherit' },
 );
 if (correctnessResult.status !== 0) {

@@ -24,10 +24,10 @@ vi.mock('@hooks/app/usePluginDisplayElementsResponder', () => ({
 vi.mock('@hooks/app/useBlockBrowserShortcuts', () => ({
   useBlockBrowserShortcuts: vi.fn(),
 }));
-vi.mock('@hooks/panel/usePanelCloseRequest', () => ({
+vi.mock('@app/renderer/hooks/panel/usePanelCloseRequest', () => ({
   usePanelCloseRequest: vi.fn(),
 }));
-vi.mock('@hooks/app/useUpdateCheck', () => ({
+vi.mock('@app/renderer/hooks/app/useUpdateCheck', () => ({
   useUpdateCheck: () => ({ checkForUpdates: mocks.checkForUpdates }),
   hasPendingPostUpdateReleaseNotice: () => false,
   clearPendingPostUpdateReleaseNotice: vi.fn(),
@@ -50,10 +50,14 @@ vi.mock('@hooks/Modal/usePalette', () => ({
 vi.mock('@api/modules/editor/keysApi', () => ({
   keysApi: { resetCountersMode: mocks.resetCountersMode },
 }));
-vi.mock('@components/main/TitleBar', () => ({ default: () => null }));
+vi.mock('@app/renderer/components/main/TitleBar', () => ({
+  default: () => null,
+}));
 vi.mock('@components/main/EditorSaveNotice', () => ({ default: () => null }));
 vi.mock('@components/main/Grid', () => ({ default: () => null }));
-vi.mock('@components/main/Settings', () => ({ default: () => null }));
+vi.mock('@app/renderer/components/main/Settings', () => ({
+  default: () => null,
+}));
 vi.mock('@components/main/Grid/PropertiesPanelHost', () => ({
   default: () => null,
 }));
@@ -61,9 +65,12 @@ vi.mock('@components/main/Modal/PopupExit', () => ({ default: () => null }));
 vi.mock('@components/main/Modal/floatingPopup/FloatingPopup', () => ({
   default: () => null,
 }));
-vi.mock('@components/main/Modal/content/dialogs/UpdateModal', () => ({
-  default: () => null,
-}));
+vi.mock(
+  '@app/renderer/components/main/Modal/content/dialogs/UpdateModal',
+  () => ({
+    default: () => null,
+  }),
+);
 vi.mock('@components/main/Modal/content/settings/NoteSetting', () => ({
   default: () => null,
 }));

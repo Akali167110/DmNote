@@ -60,9 +60,9 @@ const correctness = spawnSync(
   [
     'vitest',
     'run',
-    'src/renderer/components/main/Grid/handles/ResizeHandles.test.tsx',
-    'src/renderer/utils/animation/rafLatestScheduler.test.ts',
-    'src/renderer/hooks/Grid/resize/useGridResize.test.tsx',
+    'packages/editor/src/renderer/components/main/Grid/handles/ResizeHandles.test.tsx',
+    'packages/editor/src/renderer/utils/animation/rafLatestScheduler.test.ts',
+    'packages/editor/src/renderer/hooks/Grid/resize/useGridResize.test.tsx',
   ],
   { cwd: root, stdio: 'inherit' },
 );
@@ -74,8 +74,8 @@ const implementation = execFileSync(
     '-1',
     '--format=%H',
     '--',
-    'src/renderer/components/main/Grid/handles/ResizeHandles.tsx',
-    'src/renderer/components/main/Grid/handles/GroupResizeHandles.tsx',
+    'packages/editor/src/renderer/components/main/Grid/handles/ResizeHandles.tsx',
+    'packages/editor/src/renderer/components/main/Grid/handles/GroupResizeHandles.tsx',
   ],
   { cwd: root, encoding: 'utf8' },
 ).trim();

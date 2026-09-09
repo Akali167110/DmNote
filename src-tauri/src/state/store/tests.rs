@@ -19257,3 +19257,68 @@ fn orphan_sweep_continues_recovery_and_protects_failed_backup() {
 
     let _ = std::fs::remove_dir_all(dir);
 }
+
+#[test]
+fn native_store_and_portable_session_share_results_events_and_failure_semantics() {
+    use dmnote_editor_engine::session::EditorSession;
+    let directory = test_directory("portable-session-parity");
+    let store = initialize_neutral_editor_store(&directory);
+    let initial = store.snapshot();
+    let mut session = EditorSession::new(&serde_json::to_string(&initial).unwrap()).unwrap();
+    let request = editor_request(
+        initial.editor_revision,
+        uuid::Uuid::new_v4().to_string(),
+        position_patch(&store, 17.0),
+    );
+    let wire = serde_json::to_string(&request).unwrap();
+    let before: Value = serde_json::from_str(&session.snapshot().unwrap()).unwrap();
+    session.prepare(&wire).unwrap();
+    session.discard(&request.mutation_id).unwrap();
+    assert_eq!(
+        serde_json::from_str::<Value>(&session.snapshot().unwrap()).unwrap(),
+        before
+    );
+    session.prepare(&wire).unwrap();
+    let native = store.commit_editor_document(request.clone()).unwrap();
+    let portable: Value =
+        serde_json::from_str(&session.confirm(&request.mutation_id).unwrap()).unwrap();
+    assert_eq!(
+        portable["result"],
+        serde_json::to_value(&native.result).unwrap()
+    );
+    assert_eq!(
+        portable["event"],
+        serde_json::to_value(&native.event).unwrap()
+    );
+    assert_eq!(
+        portable["history"],
+        serde_json::to_value(&native.history_status).unwrap()
+    );
+    let portable_store: Value = serde_json::from_str(&session.snapshot().unwrap()).unwrap();
+    assert_eq!(
+        portable_store["store"],
+        serde_json::to_value(store.snapshot()).unwrap()
+    );
+    let native_replay = store.commit_editor_document(request.clone()).unwrap();
+    let portable_replay: Value = serde_json::from_str(&session.prepare(&wire).unwrap()).unwrap();
+    assert!(native_replay.replayed);
+    assert_eq!(
+        portable_replay["result"],
+        serde_json::to_value(native_replay.result).unwrap()
+    );
+    let stale = editor_request(
+        initial.editor_revision,
+        uuid::Uuid::new_v4().to_string(),
+        position_patch(&store, 22.0),
+    );
+    let native_error = store.commit_editor_document(stale.clone()).unwrap_err();
+    let portable_error: Value = serde_json::from_str(
+        &session
+            .prepare(&serde_json::to_string(&stale).unwrap())
+            .unwrap_err(),
+    )
+    .unwrap();
+    assert_eq!(portable_error, serde_json::to_value(native_error).unwrap());
+    drop(store);
+    std::fs::remove_dir_all(directory).unwrap();
+}

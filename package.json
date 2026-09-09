@@ -6,11 +6,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint src/ scripts/ci/",
-    "lint:fix": "eslint src/ --fix",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\"",
-    "type-check": "tsc --noEmit && tsc --project scripts/ci/tsconfig.json && npm run type-check:strict",
+    "lint": "eslint src/ packages/ scripts/ci/ scripts/packages/",
+    "lint:fix": "eslint src/ packages/ --fix",
+    "format": "prettier --write \"{src,packages/*/src}/**/*.{ts,tsx,css,json}\"",
+    "format:check": "prettier --check \"{src,packages/*/src}/**/*.{ts,tsx,css,json}\"",
+    "type-check": "tsc --noEmit && tsc --project scripts/ci/tsconfig.json && tsc --project scripts/packages/tsconfig.json && tsc --project packages/ipc-shim/tsconfig.json --noEmit && npm run type-check:strict",
     "type-check:watch": "tsc --noEmit --watch",
     "tauri:dev": "tauri dev -f asio-backend",
     "tauri:dev:no-asio": "tauri dev",
@@ -72,7 +72,7 @@
     "benchmark:interaction:webview:matrix:macos": "node scripts/run-interaction-webview-matrix-macos.mjs",
     "benchmark:interaction:webview:all:macos": "npm run benchmark:interaction:webview:macos && npm run benchmark:interaction:webview:matrix:macos",
     "benchmark:interaction:all": "npm run benchmark:interaction:pilots && npm run benchmark:interaction:tab-switch && npm run benchmark:interaction:dropdown && npm run benchmark:interaction:number-input && npm run benchmark:interaction:text-input && npm run benchmark:interaction:color-input && npm run benchmark:interaction:floating-popup && npm run benchmark:interaction:modal && npm run benchmark:interaction:grid-continuous-input && npm run benchmark:interaction:grid-marquee && npm run benchmark:interaction:grid-resize && npm run benchmark:interaction:gradient-axis && npm run benchmark:interaction:grid-minimap && npm run benchmark:interaction:color-track && npm run benchmark:interaction:grid-keyboard && npm run benchmark:interaction:panel-toggle && npm run benchmark:interaction:plugin-input",
-    "test:interaction:pilot": "vitest run src/renderer/__tests__/panel/shadowControls.test.tsx src/renderer/__tests__/rendering/elementShadowContract.test.ts --reporter=dot",
+    "test:interaction:pilot": "vitest run packages/editor/src/renderer/__tests__/panel/shadowControls.test.tsx packages/editor/src/renderer/__tests__/rendering/elementShadowContract.test.ts --reporter=dot",
     "test:docs": "vitest run tests/docs-code-blocks.test.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -81,7 +81,9 @@
     "test:ci": "node --experimental-strip-types --test scripts/ci/*.test.ts",
     "lint:workflows": "node --experimental-strip-types scripts/ci/actionlint.ts",
     "format:ci:check": "prettier --check \"scripts/ci/**/*.{ts,json}\" \".github/actions/**/*.yml\" \".github/workflows/ci*.yml\" .github/dependabot.yml .github/rulesets/main.json",
-    "type-check:strict": "tsc --project tsconfig.strict.json"
+    "type-check:strict": "tsc --project tsconfig.strict.json",
+    "build:packages": "tsc -p packages/ipc-shim/tsconfig.json && vite build --config vite.editor.config.ts && node --experimental-strip-types scripts/packages/editor-declarations.ts",
+    "check:packages": "node --experimental-strip-types scripts/packages/check-editor-package.ts"
   },
   "authors": [
     {
@@ -101,6 +103,7 @@
     "@eslint/js": "^9.39.4",
     "@preact/signals-react": "^3.12.0",
     "@tauri-apps/cli": "~2.11.4",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^22.15.27",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
@@ -137,6 +140,8 @@
     "@codemirror/language": "^6.12.4",
     "@codemirror/state": "^6.5.4",
     "@codemirror/view": "^6.43.10",
+    "@dmnote/editor": "0.1.0",
+    "@dmnote/ipc-shim": "0.1.0",
     "@floating-ui/react": "^0.27.20",
     "@lezer/highlight": "^1.2.3",
     "@tauri-apps/api": "~2.11.0",
@@ -149,5 +154,9 @@
     "use-sync-external-store": "^1.6.0",
     "zod": "^4.5.4",
     "zustand": "^5.0.15"
-  }
+  },
+  "workspaces": [
+    "packages/editor",
+    "packages/ipc-shim"
+  ]
 }

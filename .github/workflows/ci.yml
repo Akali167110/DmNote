@@ -92,6 +92,8 @@ jobs:
       - name: 전체 테스트와 coverage
         if: inputs.extended == true
         run: npm run test:coverage -- --reporter=default --reporter=junit --outputFile.junit=reports/vitest.xml
+      - name: 공통 패키지 빌드와 외부 소비 검증
+        run: npm run build:packages && npm run check:packages
       - run: npm run build
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ !cancelled() }}

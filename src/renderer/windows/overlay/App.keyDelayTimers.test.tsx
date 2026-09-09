@@ -42,7 +42,7 @@ vi.mock('@hooks/app/useBlockBrowserShortcuts', () => ({
 }));
 vi.mock('@hooks/app/useAppBootstrap', () => ({ useAppBootstrap: vi.fn() }));
 // 이 파일은 키 딜레이 타이머 개수를 정확히 세므로 리빌 게이트의 데드라인 타이머를 배제
-vi.mock('@hooks/overlay/useOverlayReveal', () => ({
+vi.mock('@app/renderer/hooks/overlay/useOverlayReveal', () => ({
   useOverlayReveal: () => true,
 }));
 vi.mock('@hooks/overlay/useBuiltinStatsSubscription', () => ({
@@ -78,7 +78,7 @@ vi.mock('@stores/data/useKnobItemStore', () => ({
 // usePluginDisplayElementStore는 실제 스토어 사용 — App이 store API
 // (getState/subscribe)를 요구하며, 이 파일은 플러그인 요소를 조작하지 않음
 // 히트 영역 실측은 ResizeObserver·네이티브 IPC에 의존 - 이 파일들의 관심사 밖
-vi.mock('@hooks/overlay/useOverlayHitRegions', () => ({
+vi.mock('@app/renderer/hooks/overlay/useOverlayHitRegions', () => ({
   useOverlayHitRegions: () => {},
   subscribeHitContextMenu: () => () => {},
 }));

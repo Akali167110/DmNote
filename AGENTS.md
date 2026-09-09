@@ -25,7 +25,7 @@ npm run tauri:build
 ## 프로젝트 구조
 
 ```
-src/renderer/
+packages/editor/src/renderer/
 ├── components/       # React 컴포넌트 (PascalCase 파일명)
 │   ├── main/        # 메인 윈도우 전용
 │   ├── overlay/     # 오버레이 윈도우 전용
@@ -60,7 +60,7 @@ src-tauri/src/
 ## 새 파일의 배치와 모듈 경계
 
 - 폴더당 파일 수의 강제 상한은 두지 않는다. 기능·변경 이유·실제 사용처를 기준으로 기존 폴더를 먼저 활용한다.
-- 같은 기능의 구현·전용 타입·단위 테스트를 함께 둔다. 여러 기능을 가로지르는 계약 테스트는 `src/renderer/__tests__/{editor,panel,popup,rendering,plugin}`에 둔다.
+- 같은 기능의 구현·전용 타입·단위 테스트를 함께 둔다. 여러 기능을 가로지르는 계약 테스트는 `packages/editor/src/renderer/__tests__/{editor,panel,popup,rendering,plugin}`에 둔다.
 - 공용 입력 컴포넌트는 `components/main/common/{numberInput,dropdown,checkbox}`, popup은 `components/main/Modal/{floatingPopup,listPopup,tooltip}`, picker는 `content/pickers/{color,font,sound}`에 둔다. 공유 popup layer·chrome·exit의 소유자는 `Modal` 상위에 유지한다.
 - Grid 훅은 `hooks/Grid/{selection,drag,resize,viewport,contextMenu}`로 구분한다. `hooks/Grid/index.ts`는 외부 진입점이며 내부 모듈은 실제 정의 파일을 참조한다.
 - batch 패널의 다파일 기능은 `PropertiesPanel/batch/{geometry,style,note,graph}`에 둔다. 공통 집계·commit은 batch 상위에서 소유한다. 내부에서 `PropertiesPanel/index.ts`를 거쳐 자기 구현을 다시 참조하지 않는다.
@@ -71,6 +71,13 @@ src-tauri/src/
 - 벤치마크 화면과 시나리오는 `benchmarks/{controls,grid,overlay}`에 함께 둔다. 이동 시 `package.json` 실행 경로, mock·lazy import, 소스 파일을 읽는 계약 테스트, WebView 진입점과 strict include를 함께 확인한다.
 - 모든 폴더에 `index.ts`나 한 파일만 감싸는 하위 폴더를 추가하지 않는다. Rust 파일 이동을 위해 가시성을 넓히거나 저장·복구 트랜잭션의 소유 경계를 바꾸지 않는다.
 - 폴더별 판단과 이동 전후 통계는 [소스 분류 결과](docs/source-organization-report.md), 실행 기준은 [후속 계획](docs/source-organization-plan.md)을 참고한다.
+
+## 공통 편집 패키지 경계
+
+- 편집 UI·모델·타입·자산은 `packages/editor/src`, IPC 공통 구현은 `packages/ipc-shim/src`, Rust 공통 엔진은 `src-tauri/crates/editor-engine`에 둔다.
+- 루트 `src/renderer`에는 데스크톱 창 진입점·앱 설정·업데이트·OBS 어댑터와 네이티브 화면 연결을 둔다. 벤치마크 실행 화면도 앱 호스트에 둔다.
+- `@components`, `@hooks`, `@src` 등 기존 공통 별칭은 편집 패키지 소스를 가리킨다. 앱 전용 소스는 `@app`, 창 진입점은 `@windows`로 참조한다. 공통 프로덕션 코드가 앱 소스에 의존하면 안 된다.
+- 공개 소비 경계는 `packages/editor/package.json`의 exports와 각 패키지 README를 따른다. 변경 후 `npm run build:packages && npm run check:packages`로 외부 소비도 검증한다.
 
 ## 네이밍 컨벤션
 
@@ -158,7 +165,7 @@ src-tauri/src/
 - **store에 사용자 생성 컬렉션 필드를 추가할 때**: `migration.rs`의 `recover_collection_field`에 항목 단위 복구 등록 검토 (범용 헬퍼 재사용, 한 줄). 미등록 시 그 필드만 "손상 시 통째 초기화"로 폴백
 - **`keys[mode][i]` ↔ `keyPositions[mode][i]`는 인덱스 결합** — 복구·마이그레이션에서 배열 요소 제거 금지, 제자리 대체(`""` / default)만 허용
 - **편집 결합 컬렉션을 추가할 때**: 전용 세분 저장 커맨드를 새로 만들지 말고 `EditorDocumentV1` 필드와 `editor_commit` patch·검증·이벤트에 함께 추가
-- **editor_commit 오류 코드를 추가할 때**: 백엔드 오류 정의와 프론트 `EDITOR_ERROR_CODES`(`src/types/editor.ts`)에 반드시 함께 추가 — 프론트 목록에 없는 코드는 `retryable` 값과 무관하게 "이름표 없는 오류"로 취급되어 미저장 편집이 즉시 폐기됨
+- **editor_commit 오류 코드를 추가할 때**: 백엔드 오류 정의와 프론트 `EDITOR_ERROR_CODES`(`packages/editor/src/types/editor.ts`)에 반드시 함께 추가 — 프론트 목록에 없는 코드는 `retryable` 값과 무관하게 "이름표 없는 오류"로 취급되어 미저장 편집이 즉시 폐기됨
 
 ## API 문서 동기화
 

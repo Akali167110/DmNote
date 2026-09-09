@@ -16,21 +16,24 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
-      "@components/*": ["./src/renderer/components/*"],
-      "@styles/*": ["./src/renderer/styles/*"],
+      "@components/*": ["./packages/editor/src/renderer/components/*"],
+      "@styles/*": ["./packages/editor/src/renderer/styles/*"],
       "@windows/*": ["./src/renderer/windows/*"],
-      "@hooks/*": ["./src/renderer/hooks/*"],
-      "@api/*": ["./src/renderer/api/*"],
-      "@assets/*": ["./src/renderer/assets/*"],
-      "@utils/*": ["./src/renderer/utils/*"],
-      "@stores/*": ["./src/renderer/stores/*"],
-      "@constants/*": ["./src/renderer/constants/*"],
-      "@contexts/*": ["./src/renderer/contexts/*"],
-      "@plugins/*": ["./src/renderer/plugins/*"],
-      "@config/*": ["./src/renderer/config/*"],
-      "@src/*": ["./src/*"]
+      "@hooks/*": ["./packages/editor/src/renderer/hooks/*"],
+      "@api/*": ["./packages/editor/src/renderer/api/*"],
+      "@assets/*": ["./packages/editor/src/renderer/assets/*"],
+      "@utils/*": ["./packages/editor/src/renderer/utils/*"],
+      "@stores/*": ["./packages/editor/src/renderer/stores/*"],
+      "@constants/*": ["./packages/editor/src/renderer/constants/*"],
+      "@contexts/*": ["./packages/editor/src/renderer/contexts/*"],
+      "@plugins/*": ["./packages/editor/src/renderer/plugins/*"],
+      "@config/*": ["./packages/editor/src/renderer/config/*"],
+      "@src/*": ["./packages/editor/src/*"],
+      "@dmnote/editor/*": ["./packages/editor/src/*"],
+      "@dmnote/ipc-shim": ["./packages/ipc-shim/src/index.ts"],
+      "@app/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*", "packages/editor/src/**/*"],
+  "exclude": ["node_modules", "dist", "packages/*/dist"]
 }

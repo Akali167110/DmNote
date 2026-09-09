@@ -11,13 +11,13 @@ use std::{
 
 use crate::errors::EditorCommitError;
 use crate::models::{
-    key_mappings_contain_multi, normalize_key_mappings, AppStoreData, CommittedEditorChange,
-    CustomCssPatch, CustomJsPatch, EditorCommitOrigin, EditorCommitRequest, EditorCommitResult,
-    EditorCommittedV1, EditorDocumentV1, EditorField, EditorGetResult, EditorOpResultStatusV1,
-    EditorOpResultV1, EditorTransactionResult, GestureCommitRequest, GestureCommitResult,
-    HistoryStatus, KeyCounters, KeyMappings, NoteSettingsPatch, PluginInstancesChangedPayload,
-    PluginInstancesCommitRequest, PluginInstancesReconcileRequest, SavedPluginInstance,
-    SettingsDiff, SettingsPatchInput, SettingsState, EDITOR_SCHEMA_VERSION,
+    AppStoreData, CommittedEditorChange, CustomCssPatch, CustomJsPatch, EditorCommitOrigin,
+    EditorCommitRequest, EditorCommitResult, EditorCommittedV1, EditorDocumentV1, EditorField,
+    EditorGetResult, EditorOpResultStatusV1, EditorOpResultV1, EditorTransactionResult,
+    GestureCommitRequest, GestureCommitResult, HistoryStatus, KeyCounters, KeyMappings,
+    NoteSettingsPatch, PluginInstancesChangedPayload, PluginInstancesCommitRequest,
+    PluginInstancesReconcileRequest, SavedPluginInstance, SettingsDiff, SettingsPatchInput,
+    SettingsState, EDITOR_SCHEMA_VERSION,
 };
 use anyhow::{anyhow, Context, Result};
 use parking_lot::{RwLock, RwLockWriteGuard};
@@ -28,15 +28,12 @@ use tauri::Runtime;
 use super::assets::builtin_sounds::seed_builtin_sounds;
 use super::atomic_file::atomic_replace;
 use super::editor::{
-    gesture_request_fingerprint, next_revision, repair_selected_mode, request_fingerprint,
-    request_payload_size, sync_key_counters, touched_pair, validate_document_transition,
+    gesture_request_fingerprint, next_revision, repair_selected_mode, request_payload_size,
+    sync_key_counters, touched_pair, validate_document_transition,
     validate_document_transition_with_keying, validate_history_restore_metadata,
-    validate_paired_update, validate_request_envelope, GrandfatherKeying, RequestFingerprint,
-    MUTATION_ACK_CAPACITY,
+    validate_paired_update, GrandfatherKeying, RequestFingerprint, MUTATION_ACK_CAPACITY,
 };
-use super::editor_ops::{
-    prepare_editor_ops_transition, prepare_editor_ops_transition_with_plugin_refs,
-};
+use super::editor_ops::prepare_editor_ops_transition_with_plugin_refs;
 use super::gesture::validate_gesture_commit_request;
 use super::history::{
     CustomTabsHistorySnapshot, HistoryAdmissionGate, HistoryAdmissionLease, HistoryDirection,
@@ -216,12 +213,7 @@ pub(crate) struct AdmittedHistoryOverlapMutation<T> {
     _admission: HistoryAdmissionLease,
 }
 
-#[derive(Clone)]
-struct MutationAck {
-    id: String,
-    fingerprint: RequestFingerprint,
-    result: EditorCommitResult,
-}
+use dmnote_editor_engine::commit::MutationAck;
 
 #[derive(Clone)]
 struct GestureMutationAck {
@@ -236,15 +228,7 @@ struct PluginInstancesMutationInput {
     gesture_id: Option<String>,
 }
 
-struct EditorPatchCommitOptions {
-    mutation_id: String,
-    gesture_id: Option<String>,
-    gesture_ids: Vec<String>,
-    origin: EditorCommitOrigin,
-    record_history: bool,
-    apply_key_side_effects: bool,
-    enforce_touched_fields: bool,
-}
+use dmnote_editor_engine::commit::EditorPatchCommitOptions;
 
 #[derive(Default)]
 struct EditorTransactionHistoryOptions {

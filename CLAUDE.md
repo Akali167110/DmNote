@@ -25,7 +25,7 @@ npm run tauri:build
 ## 프로젝트 구조
 
 ```
-src/renderer/
+packages/editor/src/renderer/
 ├── components/       # React 컴포넌트 (PascalCase 파일명)
 │   ├── main/        # 메인 윈도우 전용
 │   ├── overlay/     # 오버레이 윈도우 전용
@@ -56,6 +56,13 @@ src-tauri/src/
 ├── errors.rs        # CommandError / CmdResult
 └── main.rs          # 진입점
 ```
+
+## 공통 편집 패키지 경계
+
+- 편집 UI·모델·타입·자산은 `packages/editor/src`, IPC 공통 구현은 `packages/ipc-shim/src`, Rust 공통 엔진은 `src-tauri/crates/editor-engine`에 둔다.
+- 루트 `src/renderer`에는 데스크톱 창 진입점·앱 설정·업데이트·OBS 어댑터와 네이티브 화면 연결을 둔다. 벤치마크 실행 화면도 앱 호스트에 둔다.
+- `@components`, `@hooks`, `@src` 등 기존 공통 별칭은 편집 패키지 소스를 가리킨다. 앱 전용 소스는 `@app`, 창 진입점은 `@windows`로 참조한다. 공통 프로덕션 코드가 앱 소스에 의존하면 안 된다.
+- 공개 소비 경계는 `packages/editor/package.json`의 exports와 각 패키지 README를 따른다. 변경 후 `npm run build:packages && npm run check:packages`로 외부 소비도 검증한다.
 
 ## 네이밍 컨벤션
 
@@ -142,7 +149,7 @@ src-tauri/src/
 - **store에 사용자 생성 컬렉션 필드를 추가할 때**: `migration.rs`의 `recover_collection_field`에 항목 단위 복구 등록 검토 (범용 헬퍼 재사용, 한 줄). 미등록 시 그 필드만 "손상 시 통째 초기화"로 폴백
 - **`keys[mode][i]` ↔ `keyPositions[mode][i]`는 인덱스 결합** — 복구·마이그레이션에서 배열 요소 제거 금지, 제자리 대체(`""` / default)만 허용
 - **편집 결합 컬렉션을 추가할 때**: 전용 세분 저장 커맨드를 새로 만들지 말고 `EditorDocumentV1` 필드와 `editor_commit` patch·검증·이벤트에 함께 추가
-- **editor_commit 오류 코드를 추가할 때**: 백엔드 오류 정의와 프론트 `EDITOR_ERROR_CODES`(`src/types/editor.ts`)에 반드시 함께 추가 — 프론트 목록에 없는 코드는 `retryable` 값과 무관하게 "이름표 없는 오류"로 취급되어 미저장 편집이 즉시 폐기됨
+- **editor_commit 오류 코드를 추가할 때**: 백엔드 오류 정의와 프론트 `EDITOR_ERROR_CODES`(`packages/editor/src/types/editor.ts`)에 반드시 함께 추가 — 프론트 목록에 없는 코드는 `retryable` 값과 무관하게 "이름표 없는 오류"로 취급되어 미저장 편집이 즉시 폐기됨
 
 ## API 문서 동기화
 

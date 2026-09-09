@@ -131,7 +131,7 @@ vi.mock('@api/modules/app/appApi', () => ({
   windowApi: { showMain: mocks.showMain },
 }));
 // 히트 영역 실측은 ResizeObserver·네이티브 IPC에 의존 - 이 파일들의 관심사 밖
-vi.mock('@hooks/overlay/useOverlayHitRegions', () => ({
+vi.mock('@app/renderer/hooks/overlay/useOverlayHitRegions', () => ({
   useOverlayHitRegions: () => {},
   subscribeHitContextMenu: (
     listener: (pos: { x: number; y: number }) => void,

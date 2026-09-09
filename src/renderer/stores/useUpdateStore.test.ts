@@ -40,7 +40,7 @@ vi.mock('@api/modules/app/appApi', () => ({
 import {
   UpdateInstalledRestartFailedError,
   useUpdateStore,
-} from '@stores/useUpdateStore';
+} from '@app/renderer/stores/useUpdateStore';
 
 const emitProgress = (event: UpdateProgressEvent) => {
   progressListeners.forEach((listener) => listener(event));

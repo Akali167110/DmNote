@@ -1,14 +1,17 @@
 import Dropdown from '@components/main/common/dropdown/Dropdown';
-import { SettingCard, SettingRow } from '@components/main/common/SettingRow';
+import {
+  SettingCard,
+  SettingRow,
+} from '@app/renderer/components/main/common/SettingRow';
 import { useTranslation } from '@contexts/useTranslation';
-import { useKeySoundOutput } from '@hooks/audio/useKeySoundOutput';
+import { useKeySoundOutput } from '@app/renderer/hooks/audio/useKeySoundOutput';
 import {
   createKeySoundOutputViewModel,
   DEFAULT_ASIO_BUFFER,
   KEY_SOUND_ASIO_PREFIX,
   KEY_SOUND_DEVICE_PREFIX,
   truncateKeySoundDeviceName,
-} from '@utils/audio/keySoundOutputModel';
+} from '@app/renderer/utils/audio/keySoundOutputModel';
 
 interface KeySoundOutputSettingsProps {
   onMouseEnter: () => void;
