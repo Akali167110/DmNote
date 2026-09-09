@@ -590,3 +590,64 @@ fn validate_compact_size(
 
 #[cfg(test)]
 mod tests;
+
+use crate::state::history::PluginElementsHistorySnapshot;
+
+pub fn plugin_elements_snapshot(
+    store: &AppStoreData,
+    plugin_id: &str,
+) -> Result<PluginElementsHistorySnapshot, String> {
+    validate_plugin_id(plugin_id)?;
+    let key = plugin_instances_storage_key(plugin_id);
+    Ok(PluginElementsHistorySnapshot {
+        plugin_id: plugin_id.to_string(),
+        instances: decode_plugin_instances_lenient(store.plugin_data.get(&key), &key),
+    })
+}
+
+pub fn next_plugin_model_revision(current: u64) -> Result<u64, String> {
+    current
+        .checked_add(1)
+        .filter(|revision| *revision <= crate::state::editor::MAX_SAFE_WIRE_REVISION)
+        .ok_or_else(|| "PLUGIN_MODEL_REVISION_OUT_OF_RANGE".to_string())
+}
+
+pub fn collect_plugin_instance_ids<'a>(keys: impl Iterator<Item = &'a str>) -> Vec<String> {
+    let mut plugin_ids = keys
+        .filter_map(plugin_id_from_instances_storage_key)
+        .map(str::to_string)
+        .collect::<Vec<_>>();
+    plugin_ids.sort_unstable();
+    plugin_ids.dedup();
+    plugin_ids
+}
+
+pub fn plugin_id_from_storage_namespace_prefix(prefix: &str) -> Option<&str> {
+    let plugin_id = prefix
+        .strip_prefix(PLUGIN_DATA_KEY_PREFIX)?
+        .strip_suffix('/')?;
+    validate_plugin_id(plugin_id).ok()?;
+    Some(plugin_id)
+}
+
+pub fn apply_plugin_elements_snapshot(
+    store: &mut AppStoreData,
+    snapshot: &PluginElementsHistorySnapshot,
+) -> Result<(), String> {
+    validate_plugin_id(&snapshot.plugin_id)?;
+    let key = plugin_instances_storage_key(&snapshot.plugin_id);
+    match snapshot
+        .instances
+        .as_deref()
+        .map(encode_plugin_instances)
+        .transpose()?
+    {
+        Some(Some(value)) => {
+            store.plugin_data.insert(key, value);
+        }
+        Some(None) | None => {
+            store.plugin_data.remove(&key);
+        }
+    }
+    Ok(())
+}

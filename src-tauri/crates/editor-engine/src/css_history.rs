@@ -59,3 +59,34 @@ pub fn migrate_custom_css_history_at_load(
 fn history_paths_match(left: &str, right: &str) -> bool {
     path_identity_key(Path::new(left)) == path_identity_key(Path::new(right))
 }
+
+pub fn record_custom_css_load(
+    history: &mut Vec<CustomCssHistoryEntry>,
+    path: String,
+    timestamp: i64,
+) {
+    let identity = path_identity_key(Path::new(&path));
+    history.retain(|entry| path_identity_key(Path::new(&entry.path)) != identity);
+    history.push(CustomCssHistoryEntry {
+        path,
+        loaded_at: timestamp,
+        last_used_at: timestamp,
+    });
+    normalize_custom_css_history(history);
+}
+
+pub fn touch_custom_css_history(
+    history: &mut [CustomCssHistoryEntry],
+    path: &str,
+    timestamp: i64,
+) -> bool {
+    let identity = path_identity_key(Path::new(path));
+    let Some(entry) = history
+        .iter_mut()
+        .find(|entry| path_identity_key(Path::new(&entry.path)) == identity)
+    else {
+        return false;
+    };
+    entry.last_used_at = timestamp;
+    true
+}

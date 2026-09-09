@@ -35,6 +35,7 @@ export default defineConfig({
     include: [
       'src/**/*.test.{ts,tsx}',
       'packages/editor/src/**/*.test.{ts,tsx}',
+      'packages/web-host/src/**/*.test.ts',
       'tests/**/*.test.ts',
     ],
   },

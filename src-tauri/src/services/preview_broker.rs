@@ -4,153 +4,21 @@ use std::{
 };
 
 use parking_lot::Mutex;
-use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
+use serde_json::Map;
 use tauri::ipc::Channel;
 use uuid::Uuid;
 
 use crate::state::history::{HistoryAdmission, HistoryAdmissionGate};
 
-const PREVIEW_SCHEMA_VERSION: u16 = 1;
-const MAX_PREVIEW_BYTES: usize = 64 * 1024;
-const MAX_PREVIEW_TARGETS: usize = 512;
-const TOMBSTONE_CAPACITY: usize = 1_024;
-const MAX_ACTIVE_PREVIEW_SESSIONS: usize = TOMBSTONE_CAPACITY;
-
-// keyPositionSchema(src/types/key/keys.ts) 필드와 동기 유지
-// 제외: count(런타임 파생), layerName·groupId(식별자, 프리뷰 대상 아님)
-const KEY_POSITION_PATCH_FIELDS: &[&str] = &[
-    "dx",
-    "dy",
-    "width",
-    "height",
-    "rotation",
-    "hidden",
-    "activeImage",
-    "inactiveImage",
-    "soundEnabled",
-    "soundPath",
-    "soundVolume",
-    "activeTransparent",
-    "idleTransparent",
-    "noteColor",
-    "noteOpacity",
-    "noteOpacityTop",
-    "noteOpacityBottom",
-    "noteBorderRadius",
-    "noteWidth",
-    "noteAlignment",
-    "noteEffectEnabled",
-    "noteGlowEnabled",
-    "noteGlowSyncPaint",
-    "noteGlowSize",
-    "noteGlowOpacity",
-    "noteGlowOpacityTop",
-    "noteGlowOpacityBottom",
-    "noteGlowColor",
-    "noteAutoYCorrection",
-    "noteOffsetX",
-    "noteOffsetY",
-    "noteBorderWidth",
-    "noteBorderColor",
-    "noteBorderOpacity",
-    "noteBorderSide",
-    "className",
-    "zIndex",
-    "counter",
-    "backgroundColor",
-    "activeBackgroundColor",
-    "borderColor",
-    "activeBorderColor",
-    "backgroundGradient",
-    "activeBackgroundGradient",
-    "borderGradient",
-    "activeBorderGradient",
-    "borderWidth",
-    "borderRadius",
-    "shadow",
-    "activeShadow",
-    "fontSize",
-    "fontColor",
-    "activeFontColor",
-    "fontGradient",
-    "activeFontGradient",
-    "graphAnimationEnabled",
-    "fontFamily",
-    "idleImageFit",
-    "activeImageFit",
-    "imageFit",
-    "idleImageTransform",
-    "activeImageTransform",
-    "useInlineStyles",
-    "displayText",
-    "fontWeight",
-    "fontItalic",
-    "fontUnderline",
-    "fontStrikethrough",
-];
-
-const SPRITE_POSITION_PATCH_FIELDS: &[&str] = &[
-    "dx",
-    "dy",
-    "width",
-    "height",
-    "rotation",
-    "pivot",
-    "idleTransform",
-    "poses",
-    "pressDurationMs",
-    "transitionMs",
-    "transitionEasing",
-    "baseImage",
-    "referenceNaturalSize",
-];
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum PreviewKind {
-    Patch,
-    Cancel,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-#[allow(clippy::enum_variant_names)]
-pub enum PreviewDomain {
-    KeyPosition,
-    StatPosition,
-    GraphPosition,
-    KnobPosition,
-    SpritePosition,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct PreviewEnvelope {
-    pub schema_version: u16,
-    pub session_id: String,
-    pub seq: u64,
-    pub kind: PreviewKind,
-    pub source_label: String,
-    pub domain: PreviewDomain,
-    pub mode: String,
-    pub targets: Vec<u32>,
-    pub patch: Map<String, Value>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct PreviewPublishRequest {
-    pub schema_version: u16,
-    pub session_id: String,
-    pub seq: u64,
-    #[serde(default = "patch_kind")]
-    pub kind: PreviewKind,
-    pub domain: PreviewDomain,
-    pub mode: String,
-    pub targets: Vec<u32>,
-    pub patch: Map<String, Value>,
-}
+#[cfg(test)]
+use dmnote_editor_engine::preview::MAX_PREVIEW_BYTES;
+use dmnote_editor_engine::preview::{
+    validate_payload_size, validate_publish_request, validate_session_id,
+    MAX_ACTIVE_PREVIEW_SESSIONS, PREVIEW_SCHEMA_VERSION, TOMBSTONE_CAPACITY,
+};
+pub use dmnote_editor_engine::preview::{
+    PreviewDomain, PreviewEnvelope, PreviewKind, PreviewPublishRequest,
+};
 
 struct ChannelRegistration {
     generation: u64,
@@ -175,10 +43,6 @@ struct BrokerState {
 pub struct PreviewBroker {
     state: Mutex<BrokerState>,
     history_gate: Arc<HistoryAdmissionGate>,
-}
-
-fn patch_kind() -> PreviewKind {
-    PreviewKind::Patch
 }
 
 impl PreviewBroker {
@@ -430,100 +294,9 @@ impl Default for PreviewBroker {
     }
 }
 
-fn validate_publish_request(request: &PreviewPublishRequest) -> Result<(), String> {
-    if request.schema_version != PREVIEW_SCHEMA_VERSION {
-        return Err("unsupported preview schema version".to_string());
-    }
-    if request.kind != PreviewKind::Patch {
-        return Err("editor_preview_publish only accepts patch messages".to_string());
-    }
-    validate_session_id(&request.session_id)?;
-    if request.targets.len() > MAX_PREVIEW_TARGETS {
-        return Err(format!(
-            "preview target count exceeds {MAX_PREVIEW_TARGETS}"
-        ));
-    }
-    let allowed_fields = match request.domain {
-        PreviewDomain::SpritePosition => SPRITE_POSITION_PATCH_FIELDS,
-        _ => KEY_POSITION_PATCH_FIELDS,
-    };
-    if let Some(field) = request
-        .patch
-        .keys()
-        .find(|field| !allowed_fields.contains(&field.as_str()))
-    {
-        return Err(format!("preview patch field '{field}' is not allowed"));
-    }
-    for (field, value) in &request.patch {
-        if field.ends_with("Gradient") {
-            validate_preview_gradient(field, value)?;
-        }
-    }
-    validate_payload_size(request)
-}
-
 // 그라데이션 프리뷰 구조 검증 - 커밋 검증(validate_paint_gradient)의 프리뷰 대응.
 // 수신 창이 stops를 그대로 CSS로 그리므로 형태가 깨진 값은 여기서 끊는다.
 // 드래그 중 draft는 각도·순서가 canonical 이전일 수 있어 범위·정렬은 강제하지 않는다
-fn validate_preview_gradient(field: &str, value: &Value) -> Result<(), String> {
-    if value.is_null() {
-        return Ok(());
-    }
-    let Some(spec) = value.as_object() else {
-        return Err(format!(
-            "preview field '{field}' must be null or a gradient object"
-        ));
-    };
-    let angle_ok = spec
-        .get("angle")
-        .and_then(Value::as_f64)
-        .is_some_and(f64::is_finite);
-    if !angle_ok {
-        return Err(format!("preview field '{field}' must carry a finite angle"));
-    }
-    let Some(stops) = spec.get("stops").and_then(Value::as_array) else {
-        return Err(format!("preview field '{field}' must carry gradient stops"));
-    };
-    if !(2..=8).contains(&stops.len()) {
-        return Err(format!(
-            "preview field '{field}' must contain between 2 and 8 stops"
-        ));
-    }
-    for stop in stops {
-        let color_ok = stop
-            .get("color")
-            .and_then(Value::as_str)
-            .is_some_and(|color| !color.trim().is_empty());
-        let pos_ok = stop
-            .get("pos")
-            .and_then(Value::as_f64)
-            .is_some_and(|pos| pos.is_finite() && (0.0..=1.0).contains(&pos));
-        if !color_ok || !pos_ok {
-            return Err(format!(
-                "preview field '{field}' stops must carry a color and a pos between 0 and 1"
-            ));
-        }
-    }
-    Ok(())
-}
-
-fn validate_session_id(session_id: &str) -> Result<(), String> {
-    Uuid::parse_str(session_id)
-        .map(|_| ())
-        .map_err(|_| "preview sessionId must be a UUID".to_string())
-}
-
-fn validate_payload_size(payload: &impl Serialize) -> Result<(), String> {
-    let size = serde_json::to_vec(payload)
-        .map_err(|error| format!("failed to serialize preview payload: {error}"))?
-        .len();
-    if size > MAX_PREVIEW_BYTES {
-        return Err(format!(
-            "preview payload exceeds the {MAX_PREVIEW_BYTES} byte limit"
-        ));
-    }
-    Ok(())
-}
 
 fn clone_channels(
     state: &BrokerState,

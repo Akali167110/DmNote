@@ -10,7 +10,7 @@
     "lint:fix": "eslint src/ packages/ --fix",
     "format": "prettier --write \"{src,packages/*/src}/**/*.{ts,tsx,css,json}\"",
     "format:check": "prettier --check \"{src,packages/*/src}/**/*.{ts,tsx,css,json}\"",
-    "type-check": "tsc --noEmit && tsc --project scripts/ci/tsconfig.json && tsc --project scripts/packages/tsconfig.json && tsc --project packages/ipc-shim/tsconfig.json --noEmit && npm run type-check:strict",
+    "type-check": "npm run build:package-types && tsc --noEmit && tsc --project scripts/ci/tsconfig.json && tsc --project scripts/packages/tsconfig.json && tsc --project packages/ipc-shim/tsconfig.json --noEmit && npm run type-check:strict && tsc -p packages/web-host/tsconfig.tests.json",
     "type-check:watch": "tsc --noEmit --watch",
     "tauri:dev": "tauri dev -f asio-backend",
     "tauri:dev:no-asio": "tauri dev",
@@ -82,8 +82,13 @@
     "lint:workflows": "node --experimental-strip-types scripts/ci/actionlint.ts",
     "format:ci:check": "prettier --check \"scripts/ci/**/*.{ts,json}\" \".github/actions/**/*.yml\" \".github/workflows/ci*.yml\" .github/dependabot.yml .github/rulesets/main.json",
     "type-check:strict": "tsc --project tsconfig.strict.json",
-    "build:packages": "tsc -p packages/ipc-shim/tsconfig.json && vite build --config vite.editor.config.ts && node --experimental-strip-types scripts/packages/editor-declarations.ts",
-    "check:packages": "node --experimental-strip-types scripts/packages/check-editor-package.ts"
+    "build:packages": "npm run build:editor && npm run build:web-host",
+    "check:packages": "node --experimental-strip-types scripts/packages/check-editor-package.ts",
+    "build:web-host": "node --experimental-strip-types scripts/packages/build-web-host.ts",
+    "check:web-host": "node --experimental-strip-types scripts/packages/check-web-host.ts",
+    "build:package-types": "tsc -p packages/ipc-shim/tsconfig.json --emitDeclarationOnly && node --experimental-strip-types scripts/packages/editor-declarations.ts && tsc -p packages/web-host/tsconfig.declarations.json",
+    "build:editor": "tsc -p packages/ipc-shim/tsconfig.json && vite build --config vite.editor.config.ts && node --experimental-strip-types scripts/packages/editor-declarations.ts",
+    "setup:web-wasm": "node --experimental-strip-types scripts/packages/setup-web-wasm.ts"
   },
   "authors": [
     {
@@ -119,8 +124,10 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.5",
+    "fake-indexeddb": "^6.2.5",
     "globals": "^17.12.0",
     "jsdom": "^28.1.0",
+    "playwright-core": "^1.63.0",
     "postcss": "^8.5.26",
     "rollup-plugin-analyzer": "^4.0.0",
     "rollup-plugin-visualizer": "^7.1.1",
@@ -157,6 +164,7 @@
   },
   "workspaces": [
     "packages/editor",
-    "packages/ipc-shim"
+    "packages/ipc-shim",
+    "packages/web-host"
   ]
 }

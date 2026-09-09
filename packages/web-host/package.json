@@ -1,0 +1,24 @@
+{
+  "name": "@dmnote/web-host",
+  "version": "0.1.0",
+  "description": "DM Note browser host: SharedWorker, Rust/WASM and IndexedDB",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./worker": "./dist/worker.js",
+    "./wasm/*": "./dist/wasm/*"
+  },
+  "dependencies": {
+    "@dmnote/ipc-shim": "0.1.0"
+  },
+  "peerDependencies": {
+    "@dmnote/editor": "0.1.0"
+  }
+}

@@ -30,9 +30,8 @@ runs:
       working-directory: ${{ inputs.workspace }}
       shell: bash
       run: |
-        rustup target add wasm32-unknown-unknown
+        npm run setup:web-wasm
         cargo build --manifest-path src-tauri/Cargo.toml -p dmnote-editor-engine --target wasm32-unknown-unknown --locked
-        cargo install wasm-bindgen-cli --version 0.2.126 --locked
         wasm-bindgen --target nodejs --out-dir src-tauri/target/wasm-node src-tauri/target/wasm32-unknown-unknown/debug/dmnote_editor_engine.wasm
         node --experimental-strip-types src-tauri/crates/editor-engine/tests/wasm-smoke.ts src-tauri/target/wasm-node/dmnote_editor_engine.js
     - name: PR 앱 번들 검증

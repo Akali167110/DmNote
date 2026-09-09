@@ -6,7 +6,7 @@ declare global {
     api: HostGlobalApi;
     __dmn_isKeyListening?: boolean;
     __dmn_window_type?: 'main' | 'overlay' | 'panel';
-    __dmn_runtime?: 'tauri' | 'obs';
+    __dmn_runtime?: 'tauri' | 'obs' | 'web';
     __dmn_current_plugin_id?: string;
     __dmn_current_locale?: string;
     __dmn_showAlert?: (

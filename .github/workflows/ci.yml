@@ -78,7 +78,7 @@ jobs:
     needs: [changes, quality]
     if: needs.changes.outputs.mode == 'full'
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -86,6 +86,11 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-node
       - run: npm ci --no-audit --no-fund
+      - uses: ./.github/actions/setup-native
+        with:
+          cache-key: web-wasm-release
+      - name: 웹 엔진 WASM 도구 준비
+        run: npm run setup:web-wasm
       - name: 전체 테스트
         if: inputs.extended != true
         run: npm test -- --reporter=default --reporter=junit --outputFile.junit=reports/vitest.xml
@@ -94,6 +99,10 @@ jobs:
         run: npm run test:coverage -- --reporter=default --reporter=junit --outputFile.junit=reports/vitest.xml
       - name: 공통 패키지 빌드와 외부 소비 검증
         run: npm run build:packages && npm run check:packages
+      - name: 브라우저 설치
+        run: npx playwright-core install --with-deps chrome
+      - name: 실제 브라우저 웹 엔진 검증
+        run: npm run check:web-host
       - run: npm run build
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ !cancelled() }}

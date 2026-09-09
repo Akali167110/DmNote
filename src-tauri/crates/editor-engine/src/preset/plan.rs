@@ -14,7 +14,7 @@ pub struct ImportedCssPaths {
     pub tabs: Vec<String>,
 }
 /// 기존 프리셋 이벤트는 준비 시점의 CSS·JS payload를 발행한다.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct FullPresetPublication {
     pub use_custom_css: bool,
     pub custom_css: CustomCss,

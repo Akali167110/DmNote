@@ -5,4 +5,5 @@ pub mod history;
 pub mod migration;
 pub mod native_element_id;
 pub mod plugin;
+pub mod tab_data;
 pub mod tab_metadata;

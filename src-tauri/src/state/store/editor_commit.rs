@@ -194,42 +194,6 @@ impl AppStore {
         Ok(change)
     }
 
-    pub(super) fn commit_editor_patch_locked(
-        &self,
-        guard: &mut VersionedStoreState,
-        changes: &crate::models::EditorPatchV1,
-        touched_fields: &[EditorField],
-        runtime_counters: Option<&KeyCounters>,
-        options: EditorPatchCommitOptions,
-    ) -> std::result::Result<CommittedEditorChange, EditorCommitError> {
-        let mut current_store = guard.data.clone();
-        if let Some(counters) = runtime_counters {
-            current_store.key_counters = counters.clone();
-        }
-        let (current, candidate, scratch, changed_fields) =
-            prepare_editor_patch_transition(&current_store, changes, touched_fields)?;
-        if options.enforce_touched_fields
-            && changed_fields
-                .iter()
-                .any(|field| !touched_fields.contains(field))
-        {
-            return Err(EditorCommitError::validation(
-                "HISTORY_RESTORE_CHANGED_UNDECLARED_FIELD",
-                "history restore changed an editor field outside its entry",
-            ));
-        }
-        self.commit_editor_transition_locked(
-            guard,
-            current_store,
-            current,
-            candidate,
-            scratch,
-            changed_fields,
-            None,
-            options,
-        )
-    }
-
     #[allow(clippy::too_many_arguments)]
     fn commit_editor_transition_locked(
         &self,

@@ -20,6 +20,12 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip"] }
 uuid = { version = "1", features = ["v4", "js"] }
 base64 = "0.22"
+imagesize = "0.15"
+anyhow = "1"
+ttf-parser = "0.25"
+wuff = "0.2"
+infer = "0.19"
+quick-xml = "0.38"
 log = "0.4"
 sha2 = "0.10"
 url = "2"

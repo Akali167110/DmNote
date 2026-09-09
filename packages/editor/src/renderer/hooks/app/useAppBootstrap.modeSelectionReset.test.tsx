@@ -230,6 +230,7 @@ vi.mock('@utils/grid/cursorUtils', () => ({
 }));
 
 import { useAppBootstrap } from './useAppBootstrap';
+import { panelWindowApi } from '@api/modules/window/panelWindowApi';
 
 const Harness = () => {
   useAppBootstrap();
@@ -621,6 +622,23 @@ describe('모드 전환 선택 리셋', () => {
       selectedKeyType: bootstrap.selectedKeyType,
       selectionAuthoritative: true,
     });
+  });
+
+  it('웹 main에서는 히스토리를 유지하고 네이티브 패널 복원을 건너뛴다', async () => {
+    expect(panelWindowApi.takeRestoreRequest).toHaveBeenCalled();
+    act(() => root.unmount());
+    container.remove();
+    window.__dmn_runtime = 'web';
+    vi.mocked(panelWindowApi.takeRestoreRequest).mockClear();
+    mocks.syncHistoryStatus.mockClear();
+    mocks.keyState = {
+      selectedKeyType: '4key',
+      isBootstrapped: false,
+      customTabs: [],
+    };
+    await mount();
+    expect(mocks.syncHistoryStatus).toHaveBeenCalledTimes(1);
+    expect(panelWindowApi.takeRestoreRequest).not.toHaveBeenCalled();
   });
 
   it('OBS 런타임에서는 편집 히스토리 상태를 조회하지 않는다', async () => {

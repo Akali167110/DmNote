@@ -1208,17 +1208,23 @@ dependencies = [
 name = "dmnote-editor-engine"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "base64 0.22.1",
+ "imagesize",
+ "infer",
  "log",
  "once_cell",
  "percent-encoding",
+ "quick-xml 0.38.4",
  "serde",
  "serde_json",
  "sha2",
+ "ttf-parser",
  "unicode-normalization",
  "url",
  "uuid",
  "wasm-bindgen",
+ "wuff",
 ]
 
 [[package]]

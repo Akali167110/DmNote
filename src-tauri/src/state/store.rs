@@ -11,12 +11,11 @@ use std::{
 
 use crate::errors::EditorCommitError;
 use crate::models::{
-    AppStoreData, CommittedEditorChange, CustomCssPatch, CustomJsPatch, EditorCommitOrigin,
-    EditorCommitRequest, EditorCommitResult, EditorCommittedV1, EditorDocumentV1, EditorField,
-    EditorGetResult, EditorOpResultStatusV1, EditorOpResultV1, EditorTransactionResult,
-    GestureCommitRequest, GestureCommitResult, HistoryStatus, KeyCounters, KeyMappings,
-    NoteSettingsPatch, PluginInstancesChangedPayload, PluginInstancesCommitRequest,
-    PluginInstancesReconcileRequest, SavedPluginInstance, SettingsDiff, SettingsPatchInput,
+    AppStoreData, CommittedEditorChange, EditorCommitOrigin, EditorCommitRequest,
+    EditorCommitResult, EditorCommittedV1, EditorDocumentV1, EditorField, EditorGetResult,
+    EditorOpResultStatusV1, EditorOpResultV1, EditorTransactionResult, GestureCommitRequest,
+    GestureCommitResult, HistoryStatus, KeyCounters, PluginInstancesChangedPayload,
+    PluginInstancesCommitRequest, PluginInstancesReconcileRequest, SavedPluginInstance,
     SettingsState, EDITOR_SCHEMA_VERSION,
 };
 use anyhow::{anyhow, Context, Result};
@@ -29,18 +28,16 @@ use super::assets::builtin_sounds::seed_builtin_sounds;
 use super::atomic_file::atomic_replace;
 use super::editor::{
     gesture_request_fingerprint, next_revision, repair_selected_mode, request_payload_size,
-    sync_key_counters, touched_pair, validate_document_transition,
-    validate_document_transition_with_keying, validate_history_restore_metadata,
+    sync_key_counters, touched_pair, validate_document_transition_with_keying,
     validate_paired_update, GrandfatherKeying, RequestFingerprint, MUTATION_ACK_CAPACITY,
 };
 use super::editor_ops::prepare_editor_ops_transition_with_plugin_refs;
 use super::gesture::validate_gesture_commit_request;
 use super::history::{
     CustomTabsHistorySnapshot, HistoryAdmissionGate, HistoryAdmissionLease, HistoryDirection,
-    HistoryEntry, HistoryRecordPlan, HistoryScope, HistoryService, HistorySnapshot,
-    PluginElementsHistorySnapshot, PresetFullHistorySnapshot, PresetHistorySettingsSnapshot,
-    HISTORY_ENTRY_TOO_LARGE, HISTORY_INVALID_OPPOSITE_ENTRY, HISTORY_IN_PROGRESS,
-    HISTORY_SCOPE_MISMATCH, HISTORY_TARGET_ALREADY_APPLIED, INVALID_HISTORY_OPERATION_ID,
+    HistoryRecordPlan, HistoryScope, HistoryService, HistorySnapshot,
+    PluginElementsHistorySnapshot, PresetFullHistorySnapshot, HISTORY_ENTRY_TOO_LARGE,
+    HISTORY_IN_PROGRESS, INVALID_HISTORY_OPERATION_ID,
 };
 use super::migration::{
     fill_missing_sprite_image_metrics, find_legacy_store_file, load_store_from_path,
@@ -49,12 +46,12 @@ use super::migration::{
 };
 use super::plugin::{
     add_plugin_group_refs, decode_plugin_instance_entries, decode_plugin_instances_lenient,
-    encode_plugin_instance_entries, encode_plugin_instances, for_each_stored_plugin_instances,
+    encode_plugin_instance_entries, for_each_stored_plugin_instances,
     is_plugin_instances_storage_key, normalize_plugin_instance_tab_id,
     plugin_group_refs_from_store, plugin_id_from_instances_storage_key,
     plugin_instances_storage_key, validate_plugin_id, validate_plugin_instances_reconcile_request,
     validate_plugin_instances_request, validate_plugin_instances_transition, PluginGroupRefs,
-    StoredPluginInstanceEntry, PLUGIN_DATA_KEY_PREFIX,
+    StoredPluginInstanceEntry,
 };
 
 mod asset_references;
@@ -76,10 +73,8 @@ use asset_references::{
     collect_local_image_path_keys, collect_local_sound_path_keys, iter_all_positions,
 };
 use editor_transactions::{
-    editor_error_outcome, editor_history_error, ensure_generic_editor_unchanged,
-    insert_gesture_mutation_ack, insert_mutation_ack, prepare_editor_patch_transition,
-    project_editor_history_key_counters, project_history_key_counters, require_history_entry,
-    validate_observed_history_epoch,
+    editor_error_outcome, ensure_generic_editor_unchanged, insert_gesture_mutation_ack,
+    insert_mutation_ack, prepare_editor_patch_transition, validate_observed_history_epoch,
 };
 use persistence::StoreWriter;
 pub(crate) use sound_assets::{
@@ -122,39 +117,9 @@ struct VersionedStoreState {
     history: HistoryService,
 }
 
-#[derive(Debug)]
-pub(crate) struct HistoryOperationResult {
-    pub(crate) status: HistoryStatus,
-    pub(crate) change: Option<CommittedEditorChange>,
-    pub(crate) aux_change: Option<HistoryAuxChange>,
-    pub(crate) replayed: bool,
-    pub(crate) runtime_publication_generation: u64,
-}
-
-#[derive(Debug)]
-pub(crate) enum HistoryAuxChange {
-    CustomTabs {
-        snapshot: Box<CustomTabsHistorySnapshot>,
-        changed_tab_css_ids: Vec<String>,
-        plugin_ids: Vec<String>,
-        revision: u64,
-    },
-    PresetFull {
-        snapshot: Box<PresetFullHistorySnapshot>,
-        settings_diff: Box<SettingsDiff>,
-        changed_tab_css_ids: Vec<String>,
-    },
-    Mode(String),
-    Counters(KeyCounters),
-    PluginElements {
-        plugin_id: String,
-        revision: u64,
-    },
-    PluginElementsBatch {
-        plugin_ids: Vec<String>,
-        revision: u64,
-    },
-}
+pub(crate) use dmnote_editor_engine::history_transition::{
+    HistoryAuxChange, HistoryOperationResult,
+};
 
 #[derive(Debug)]
 pub(crate) struct PluginInstancesCommitOutcome {
@@ -640,34 +605,11 @@ fn initialize_default_state() -> AppStoreData {
     data
 }
 
-fn plugin_elements_snapshot(
-    store: &AppStoreData,
-    plugin_id: &str,
-) -> Result<PluginElementsHistorySnapshot, String> {
-    validate_plugin_id(plugin_id)?;
-    let key = plugin_instances_storage_key(plugin_id);
-    Ok(PluginElementsHistorySnapshot {
-        plugin_id: plugin_id.to_string(),
-        instances: decode_plugin_instances_lenient(store.plugin_data.get(&key), &key),
-    })
-}
+use dmnote_editor_engine::state::plugin::plugin_elements_snapshot;
 
-fn next_plugin_model_revision(current: u64) -> Result<u64, String> {
-    current
-        .checked_add(1)
-        .filter(|revision| *revision <= crate::state::editor::MAX_SAFE_WIRE_REVISION)
-        .ok_or_else(|| "PLUGIN_MODEL_REVISION_OUT_OF_RANGE".to_string())
-}
+use dmnote_editor_engine::state::plugin::next_plugin_model_revision;
 
-fn collect_plugin_instance_ids<'a>(keys: impl Iterator<Item = &'a str>) -> Vec<String> {
-    let mut plugin_ids = keys
-        .filter_map(plugin_id_from_instances_storage_key)
-        .map(str::to_string)
-        .collect::<Vec<_>>();
-    plugin_ids.sort_unstable();
-    plugin_ids.dedup();
-    plugin_ids
-}
+use dmnote_editor_engine::state::plugin::collect_plugin_instance_ids;
 
 fn reset_plugin_instances_for_scope(
     store: &mut AppStoreData,
@@ -727,88 +669,12 @@ fn reset_plugin_instances_for_scope(
     Ok(affected_plugin_ids)
 }
 
-fn plugin_id_from_storage_namespace_prefix(prefix: &str) -> Option<&str> {
-    let plugin_id = prefix
-        .strip_prefix(PLUGIN_DATA_KEY_PREFIX)?
-        .strip_suffix('/')?;
-    validate_plugin_id(plugin_id).ok()?;
-    Some(plugin_id)
-}
+use dmnote_editor_engine::state::plugin::plugin_id_from_storage_namespace_prefix;
 
-fn apply_plugin_elements_snapshot(
-    store: &mut AppStoreData,
-    snapshot: &PluginElementsHistorySnapshot,
-) -> Result<(), String> {
-    validate_plugin_id(&snapshot.plugin_id)?;
-    let key = plugin_instances_storage_key(&snapshot.plugin_id);
-    match snapshot
-        .instances
-        .as_deref()
-        .map(encode_plugin_instances)
-        .transpose()?
-    {
-        Some(Some(value)) => {
-            store.plugin_data.insert(key, value);
-        }
-        Some(None) | None => {
-            store.plugin_data.remove(&key);
-        }
-    }
-    Ok(())
-}
+use dmnote_editor_engine::state::plugin::apply_plugin_elements_snapshot;
 
-fn preset_history_settings_patch(settings: &PresetHistorySettingsSnapshot) -> SettingsPatchInput {
-    let note = &settings.note_settings;
-    SettingsPatchInput {
-        note_effect: Some(settings.note_effect),
-        laboratory_enabled: Some(settings.laboratory_enabled),
-        note_settings: Some(NoteSettingsPatch {
-            frame_limit: Some(note.frame_limit),
-            speed: Some(note.speed),
-            track_height: Some(note.track_height),
-            reverse: Some(note.reverse),
-            fade_position: Some(note.fade_position.clone()),
-            fade_top_px: Some(note.fade_top_px),
-            fade_bottom_px: Some(note.fade_bottom_px),
-            reverse_fade_top_px: Some(note.reverse_fade_top_px),
-            reverse_fade_bottom_px: Some(note.reverse_fade_bottom_px),
-            delayed_note_enabled: Some(note.delayed_note_enabled),
-            short_note_threshold_ms: Some(note.short_note_threshold_ms),
-            short_note_min_length_px: Some(note.short_note_min_length_px),
-            key_display_delay_ms: Some(note.key_display_delay_ms),
-        }),
-        background_color: Some(settings.background_color.clone()),
-        use_custom_css: Some(settings.use_custom_css),
-        custom_css: Some(CustomCssPatch {
-            path: Some(settings.custom_css.path.clone()),
-            content: Some(settings.custom_css.content.clone()),
-        }),
-        font_settings: Some(settings.font_settings.clone()),
-        use_custom_js: Some(settings.use_custom_js),
-        custom_js: Some(CustomJsPatch {
-            path: Some(settings.custom_js.path.clone()),
-            content: Some(settings.custom_js.content.clone()),
-            plugins: Some(settings.custom_js.plugins.clone()),
-        }),
-        ..SettingsPatchInput::default()
-    }
-}
-
-fn changed_map_ids<T: PartialEq>(
-    current: &std::collections::HashMap<String, T>,
-    target: &std::collections::HashMap<String, T>,
-) -> Vec<String> {
-    let mut ids = current
-        .keys()
-        .chain(target.keys())
-        .filter(|id| current.get(*id) != target.get(*id))
-        .cloned()
-        .collect::<HashSet<_>>()
-        .into_iter()
-        .collect::<Vec<_>>();
-    ids.sort();
-    ids
-}
+#[cfg(test)]
+use dmnote_editor_engine::history_transition::project_history_key_counters;
 
 #[cfg(test)]
 mod gradient_real_data_simulation;

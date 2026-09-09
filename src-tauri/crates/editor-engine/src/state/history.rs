@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, sync::Arc};
 
 mod snapshot;
 
@@ -35,10 +35,10 @@ struct HistoryOperationAck {
     direction: HistoryDirection,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HistoryService {
-    past: VecDeque<HistoryEntry>,
-    future: VecDeque<HistoryEntry>,
+    past: VecDeque<Arc<HistoryEntry>>,
+    future: VecDeque<Arc<HistoryEntry>>,
     history_revision: u64,
     history_epoch: u64,
     status_seq: u64,
@@ -63,6 +63,16 @@ impl Default for HistoryService {
 }
 
 impl HistoryService {
+    /// 재시작 시 기존 문서의 미저장 히스토리 요청을 무효화하는 빈 실행 상태.
+    pub fn restart_empty_after(history_revision: u64, history_epoch: u64, status_seq: u64) -> Self {
+        Self {
+            history_revision: history_revision.saturating_add(1),
+            history_epoch: history_epoch.saturating_add(1),
+            status_seq: status_seq.saturating_add(1),
+            ..Self::default()
+        }
+    }
+
     fn with_limits(entry_max_bytes: usize, total_max_bytes: usize, max_entries: usize) -> Self {
         Self {
             past: VecDeque::new(),
@@ -402,7 +412,7 @@ impl HistoryService {
                     entry.access_sequence = previous.access_sequence;
                     self.total_bytes = self.total_bytes.saturating_sub(previous.size_bytes);
                     self.total_bytes = self.total_bytes.saturating_add(entry.size_bytes);
-                    *previous = *entry;
+                    *previous = Arc::from(entry);
                 } else {
                     self.push_past(*entry);
                     self.advance_revision();
@@ -526,8 +536,8 @@ impl HistoryService {
 
     pub fn target(&self, direction: HistoryDirection) -> Option<&HistoryEntry> {
         match direction {
-            HistoryDirection::Undo => self.past.back(),
-            HistoryDirection::Redo => self.future.back(),
+            HistoryDirection::Undo => self.past.back().map(Arc::as_ref),
+            HistoryDirection::Redo => self.future.back().map(Arc::as_ref),
         }
     }
 
@@ -561,22 +571,22 @@ impl HistoryService {
     fn push_past(&mut self, mut entry: HistoryEntry) {
         self.assign_access_sequence(&mut entry);
         self.total_bytes = self.total_bytes.saturating_add(entry.size_bytes);
-        self.past.push_back(entry);
+        self.past.push_back(Arc::new(entry));
     }
 
     fn push_future(&mut self, mut entry: HistoryEntry) {
         self.assign_access_sequence(&mut entry);
         self.total_bytes = self.total_bytes.saturating_add(entry.size_bytes);
-        self.future.push_back(entry);
+        self.future.push_back(Arc::new(entry));
     }
 
-    fn pop_past(&mut self) -> Option<HistoryEntry> {
+    fn pop_past(&mut self) -> Option<Arc<HistoryEntry>> {
         let entry = self.past.pop_back()?;
         self.total_bytes = self.total_bytes.saturating_sub(entry.size_bytes);
         Some(entry)
     }
 
-    fn pop_future(&mut self) -> Option<HistoryEntry> {
+    fn pop_future(&mut self) -> Option<Arc<HistoryEntry>> {
         let entry = self.future.pop_back()?;
         self.total_bytes = self.total_bytes.saturating_sub(entry.size_bytes);
         Some(entry)

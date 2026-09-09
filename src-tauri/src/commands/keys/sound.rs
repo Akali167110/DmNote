@@ -15,8 +15,7 @@ use crate::commands::{
 };
 use crate::errors::{CmdResult, CommandError};
 use crate::models::{
-    AppStoreData, EditorCommitOrigin, EditorField, PendingProcessedWavReplacement,
-    SoundLibraryEntry, SoundSource,
+    EditorCommitOrigin, EditorField, PendingProcessedWavReplacement, SoundLibraryEntry, SoundSource,
 };
 use crate::services::event_publisher::publish_event;
 use crate::state::{
@@ -457,52 +456,7 @@ fn sound_delete_inner(
     Ok(SoundDeleteResponse { success: true })
 }
 
-fn remove_sound_entry_and_references(store: &mut AppStoreData, path_key: &str) -> bool {
-    store.sound_library.remove(path_key);
-    let mut references_changed = false;
-
-    for positions in store.key_positions.values_mut() {
-        for position in positions.iter_mut() {
-            if position.sound_path.as_deref() == Some(path_key) {
-                position.sound_path = None;
-                position.sound_enabled = Some(false);
-                references_changed = true;
-            }
-        }
-    }
-
-    for positions in store.stat_positions.values_mut() {
-        for stat_position in positions.iter_mut() {
-            if stat_position.position.sound_path.as_deref() == Some(path_key) {
-                stat_position.position.sound_path = None;
-                stat_position.position.sound_enabled = Some(false);
-                references_changed = true;
-            }
-        }
-    }
-
-    for positions in store.graph_positions.values_mut() {
-        for graph_position in positions.iter_mut() {
-            if graph_position.position.sound_path.as_deref() == Some(path_key) {
-                graph_position.position.sound_path = None;
-                graph_position.position.sound_enabled = Some(false);
-                references_changed = true;
-            }
-        }
-    }
-
-    for positions in store.knob_positions.values_mut() {
-        for knob_position in positions.iter_mut() {
-            if knob_position.position.sound_path.as_deref() == Some(path_key) {
-                knob_position.position.sound_path = None;
-                knob_position.position.sound_enabled = Some(false);
-                references_changed = true;
-            }
-        }
-    }
-
-    references_changed
-}
+use dmnote_editor_engine::web_resources::remove_sound_entry_and_references;
 
 fn sound_delete_rollback_error(
     primary: CommandError,

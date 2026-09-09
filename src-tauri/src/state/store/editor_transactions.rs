@@ -33,18 +33,6 @@ pub(super) fn editor_error_outcome(code: EditorCommitErrorCode) -> &'static str 
 
 pub(super) use dmnote_editor_engine::commit::prepare_editor_patch_transition;
 
-pub(super) fn require_history_entry(plan: HistoryRecordPlan) -> Result<HistoryEntry, String> {
-    match plan {
-        HistoryRecordPlan::Entry(entry) => Ok(*entry),
-        HistoryRecordPlan::Merge { .. } => Err(HISTORY_INVALID_OPPOSITE_ENTRY.to_string()),
-        HistoryRecordPlan::Truncate => Err(HISTORY_ENTRY_TOO_LARGE.to_string()),
-    }
-}
-
-pub(super) fn editor_history_error(error: EditorCommitError) -> String {
-    format!("{:?}: {}", error.error_code, error.message)
-}
-
 pub(super) fn validate_observed_history_epoch(
     history: &HistoryService,
     observed_history_epoch: Option<u64>,
@@ -55,39 +43,6 @@ pub(super) fn validate_observed_history_epoch(
         ));
     }
     Ok(())
-}
-
-pub(super) fn project_history_key_counters(
-    current: &KeyCounters,
-    historical: &KeyCounters,
-    target_keys: &KeyMappings,
-) -> KeyCounters {
-    let mut projected = historical.clone();
-    sync_key_counters(&mut projected, target_keys);
-    for (mode, counters) in &mut projected {
-        let Some(current_mode) = current.get(mode) else {
-            continue;
-        };
-        for (key, count) in counters {
-            if let Some(current_count) = current_mode.get(key) {
-                *count = *current_count;
-            }
-        }
-    }
-    projected
-}
-
-pub(super) fn project_editor_history_key_counters(
-    current: &KeyCounters,
-    historical: Option<&KeyCounters>,
-    target_keys: &KeyMappings,
-) -> KeyCounters {
-    let Some(historical) = historical else {
-        let mut projected = current.clone();
-        sync_key_counters(&mut projected, target_keys);
-        return projected;
-    };
-    project_history_key_counters(current, historical, target_keys)
 }
 
 pub(super) fn insert_mutation_ack(

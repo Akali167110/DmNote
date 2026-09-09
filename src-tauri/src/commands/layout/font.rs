@@ -125,22 +125,7 @@ fn font_file_has_supported_content(path: &Path) -> io::Result<bool> {
     Ok(font_bytes_have_supported_content(&header))
 }
 
-fn font_bytes_have_supported_content(bytes: &[u8]) -> bool {
-    let Some(header) = bytes.get(..4) else {
-        return false;
-    };
-
-    [
-        b"\x00\x01\x00\x00",
-        b"true",
-        b"ttcf",
-        b"OTTO",
-        b"wOFF",
-        b"wOF2",
-    ]
-    .iter()
-    .any(|signature| header == *signature)
-}
+use dmnote_editor_engine::web_resources::font::font_bytes_have_supported_content;
 
 #[cfg(test)]
 mod tests {

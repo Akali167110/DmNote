@@ -545,7 +545,10 @@ export function useAppBootstrap() {
 
         // 분리 상태로 종료했다면 복원 - 창은 메인만 열 수 있어(opener 자식) 백엔드는
         // 요청만 남긴다. 부트스트랩 뒤에 열어야 패널이 채워진 상태로 뜬다
-        if (window.__dmn_window_type === 'main') {
+        if (
+          window.__dmn_window_type === 'main' &&
+          window.__dmn_runtime === 'tauri'
+        ) {
           try {
             if (await panelWindowApi.takeRestoreRequest()) {
               void detachPropertiesPanel();

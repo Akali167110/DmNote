@@ -1,3 +1,5 @@
+use dmnote_editor_engine::preview::SPRITE_POSITION_PATCH_FIELDS;
+use serde_json::Value;
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
     Arc,

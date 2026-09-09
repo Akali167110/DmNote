@@ -1,14 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-pub enum InputDeviceKind {
-    Keyboard,
-    Mouse,
-    Gamepad,
-    #[serde(other)]
-    Unknown,
-}
+pub use dmnote_editor_engine::keyboard::InputDeviceKind;
 
 fn default_device_kind() -> InputDeviceKind {
     InputDeviceKind::Keyboard

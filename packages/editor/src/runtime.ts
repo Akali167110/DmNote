@@ -29,3 +29,5 @@ export type {
   CssImportFetchResult,
 } from './renderer/utils/css/resolveUserCssImports';
 export { initializeMotionPreferences } from './renderer/utils/animation/motionPreferences';
+export { flushFocusedEditor } from './renderer/editor/runtime/lifecycle/lifecycleEditorFlush';
+export { runAfterEditorFlush } from './renderer/api/modules/app/appApi';

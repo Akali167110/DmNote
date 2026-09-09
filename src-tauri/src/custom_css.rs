@@ -6,10 +6,7 @@ use std::{
 
 use serde::Serialize;
 
-use crate::{
-    models::{AppStoreData, CustomCssHistoryEntry},
-    state::assets::local_asset_path::path_identity_key,
-};
+use crate::{models::AppStoreData, state::assets::local_asset_path::path_identity_key};
 
 pub(crate) const MAX_CUSTOM_CSS_BYTES: u64 = 1024 * 1024;
 #[cfg(test)]
@@ -138,36 +135,9 @@ pub(crate) fn inspect_css_history_status(path: &Path) -> CustomCssHistoryStatus 
 
 pub(crate) use dmnote_editor_engine::css_history::normalize_custom_css_history;
 
-pub(crate) fn record_custom_css_load(
-    history: &mut Vec<CustomCssHistoryEntry>,
-    path: String,
-    timestamp: i64,
-) {
-    let identity = path_identity_key(Path::new(&path));
-    history.retain(|entry| path_identity_key(Path::new(&entry.path)) != identity);
-    history.push(CustomCssHistoryEntry {
-        path,
-        loaded_at: timestamp,
-        last_used_at: timestamp,
-    });
-    normalize_custom_css_history(history);
-}
-
-pub(crate) fn touch_custom_css_history(
-    history: &mut [CustomCssHistoryEntry],
-    path: &str,
-    timestamp: i64,
-) -> bool {
-    let identity = path_identity_key(Path::new(path));
-    let Some(entry) = history
-        .iter_mut()
-        .find(|entry| path_identity_key(Path::new(&entry.path)) == identity)
-    else {
-        return false;
-    };
-    entry.last_used_at = timestamp;
-    true
-}
+pub(crate) use dmnote_editor_engine::css_history::{
+    record_custom_css_load, touch_custom_css_history,
+};
 
 pub(crate) fn history_paths_match(left: &str, right: &str) -> bool {
     path_identity_key(Path::new(left)) == path_identity_key(Path::new(right))
@@ -231,6 +201,7 @@ fn map_io_error(error: std::io::Error) -> CssPathError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::CustomCssHistoryEntry;
 
     fn test_directory(label: &str) -> PathBuf {
         std::env::temp_dir().join(format!("dmnote-css-{label}-{}", uuid::Uuid::new_v4()))
