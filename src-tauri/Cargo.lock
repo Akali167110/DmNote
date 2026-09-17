@@ -1195,7 +1195,7 @@ dependencies = [
  "tauri-plugin-single-instance",
  "tauri-runtime-wry",
  "tempfile",
- "thiserror 1.0.69",
+ "thiserror 2.0.17",
  "thread-priority",
  "tokio",
  "tokio-tungstenite",
