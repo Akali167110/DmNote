@@ -12,6 +12,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 3
+    ignore:
+      # Hooks 린트 7.1 전환은 React Compiler bail-out 정리와 함께 별도 과제로 진행 — 완료 시 제거
+      - dependency-name: eslint-plugin-react-hooks
+        versions: ['>=7.1.0']
     groups:
       npm-minor-patch:
         update-types: [minor, patch]
