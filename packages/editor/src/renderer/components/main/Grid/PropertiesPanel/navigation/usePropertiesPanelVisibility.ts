@@ -4,6 +4,7 @@ type PanelMode = 'layer' | 'property';
 
 interface UsePropertiesPanelVisibilityOptions {
   frameVariant: 'inline' | 'window';
+  visibilityMode: 'selection' | 'manual';
   isPanelVisible: boolean;
   setIsPanelVisible: (visible: boolean) => void;
   panelMode: PanelMode;
@@ -25,6 +26,7 @@ interface UsePropertiesPanelVisibilityOptions {
 
 export const usePropertiesPanelVisibility = ({
   frameVariant,
+  visibilityMode,
   isPanelVisible,
   setIsPanelVisible,
   panelMode,
@@ -69,7 +71,7 @@ export const usePropertiesPanelVisibility = ({
       return;
     }
 
-    if (hasSelection) {
+    if (visibilityMode === 'selection' && hasSelection) {
       // 열린 패널의 페이지는 sticky — 레이어 목록 표시 중 캔버스 클릭은 선택만 바꾸고
       // 편집(property) 진입은 더블클릭·목록 더블클릭·헤더 토글만 수행한다 (포토샵식)
       if (!hadSelection) {
@@ -82,7 +84,7 @@ export const usePropertiesPanelVisibility = ({
         setPanelMode('property');
         setIsPanelVisible(true);
       }
-    } else if (hadSelection) {
+    } else if (visibilityMode === 'selection' && hadSelection) {
       if (keyTypeChangedRef.current && isPanelVisible) {
         setPanelMode('layer');
       } else if (
@@ -107,6 +109,7 @@ export const usePropertiesPanelVisibility = ({
     setBatchPickerFor(null);
     closePage();
   }, [
+    visibilityMode,
     singleKeyIndex,
     selectedKeyElementsLength,
     selectedElements,
@@ -142,6 +145,7 @@ export const usePropertiesPanelVisibility = ({
 
   useEffect(() => {
     if (
+      visibilityMode === 'selection' &&
       selectedBatchGeometryElementsLength + selectedPluginElementsLength > 1 &&
       !isPanelVisible &&
       !manuallyClosedRef.current
@@ -150,6 +154,7 @@ export const usePropertiesPanelVisibility = ({
       setIsPanelVisible(true);
     }
   }, [
+    visibilityMode,
     selectedBatchGeometryElementsLength,
     selectedPluginElementsLength,
     isPanelVisible,
@@ -168,7 +173,12 @@ export const usePropertiesPanelVisibility = ({
   useEffect(() => {
     const hasSelection =
       selectedKeyElementsLength > 0 || selectedElements.length > 0;
-    if (frameVariant === 'window' || !isPanelVisible || hasSelection) {
+    if (
+      visibilityMode === 'manual' ||
+      frameVariant === 'window' ||
+      !isPanelVisible ||
+      hasSelection
+    ) {
       return undefined;
     }
 
@@ -200,6 +210,7 @@ export const usePropertiesPanelVisibility = ({
       document.removeEventListener('mousedown', handleGridClick);
     };
   }, [
+    visibilityMode,
     frameVariant,
     isPanelVisible,
     selectedKeyElementsLength,

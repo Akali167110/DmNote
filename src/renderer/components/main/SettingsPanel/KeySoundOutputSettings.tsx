@@ -1,8 +1,5 @@
 import Dropdown from '@components/main/common/dropdown/Dropdown';
-import {
-  SettingCard,
-  SettingRow,
-} from '@app/renderer/components/main/common/SettingRow';
+import { SettingCard, SettingRow } from '@components/main/common/SettingRow';
 import { useTranslation } from '@contexts/useTranslation';
 import { useKeySoundOutput } from '@app/renderer/hooks/audio/useKeySoundOutput';
 import {

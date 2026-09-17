@@ -279,8 +279,16 @@ const flushRaf = () => {
   callbacks.forEach((callback) => callback(performance.now()));
 };
 
-const Harness = () => (
+interface HarnessProps {
+  panelProps?: Pick<
+    React.ComponentProps<typeof PropertiesPanel>,
+    'visibilityMode' | 'includeCanvasPanel'
+  >;
+}
+
+const Harness = ({ panelProps }: HarnessProps) => (
   <>
+    <div data-grid-container data-testid="empty-grid" />
     <PluginElementsRenderer
       windowType="main"
       activeTool="select"
@@ -290,7 +298,7 @@ const Harness = () => (
       onMultiDragStart={() => {}}
       onMultiDragEnd={() => {}}
     />
-    <PropertiesPanel onKeyMappingChange={() => {}} />
+    <PropertiesPanel {...panelProps} onKeyMappingChange={() => {}} />
   </>
 );
 
@@ -325,10 +333,13 @@ const seedStores = (target: Target) => {
   });
 };
 
-const mountHarness = (target: Target) => {
+const mountHarness = (
+  target: Target,
+  panelProps?: HarnessProps['panelProps'],
+) => {
   seedStores(target);
   act(() => {
-    root.render(<Harness />);
+    root.render(<Harness panelProps={panelProps} />);
   });
   return container.querySelector(
     `[data-plugin-element="${target.fullId}"]`,
@@ -429,6 +440,69 @@ afterEach(() => {
 });
 
 describe.each(TARGETS)('플러그인 요소 패널 열림 계약 ($label)', (target) => {
+  it.each(['selection', 'manual'] as const)(
+    '%s 모드는 선택 해제와 빈 그리드 클릭에 따른 자동 닫힘을 구분한다',
+    (visibilityMode) => {
+      const el = mountHarness(target, {
+        visibilityMode,
+        includeCanvasPanel: false,
+      });
+      act(() => {
+        usePropertiesPanelStore.getState().requestCanvasPanelToggle();
+      });
+      stationaryClick(el);
+      expect(panelOpen()).toBe(true);
+
+      act(() => {
+        useGridSelectionStore.getState().clearSelection();
+      });
+      expect(panelOpen()).toBe(visibilityMode === 'manual');
+      if (visibilityMode === 'manual') {
+        expect(container.textContent).toContain('propertiesPanel.noSelection');
+      } else {
+        act(() => {
+          usePropertiesPanelStore.getState().requestCanvasPanelToggle();
+        });
+      }
+
+      act(() => {
+        container
+          .querySelector('[data-testid="empty-grid"]')!
+          .dispatchEvent(
+            new MouseEvent('mousedown', { bubbles: true, button: 0 }),
+          );
+      });
+      expect(panelOpen()).toBe(visibilityMode === 'manual');
+    },
+  );
+
+  it('수동 모드는 접은 뒤 선택·해제·재선택해도 접힘을 유지하고 명시적 토글로 열린다', () => {
+    const el = mountHarness(target, {
+      visibilityMode: 'manual',
+      includeCanvasPanel: false,
+    });
+    act(() => {
+      usePropertiesPanelStore.getState().requestCanvasPanelToggle();
+    });
+    stationaryClick(el);
+    act(() => {
+      usePropertiesPanelStore.getState().requestCanvasPanelToggle();
+    });
+    expect(panelOpen()).toBe(false);
+
+    act(() => {
+      useGridSelectionStore.getState().clearSelection();
+    });
+    stationaryClick(node(target));
+    expect(selection()).toEqual([{ type: 'plugin', id: target.fullId }]);
+    expect(panelOpen()).toBe(false);
+
+    act(() => {
+      usePropertiesPanelStore.getState().requestCanvasPanelToggle();
+    });
+    expect(panelOpen()).toBe(true);
+  });
+
   it('(a) 비선택 클릭은 선택하고 패널을 연다 (0→1)', () => {
     const el = mountHarness(target);
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '@components/main/Modal/Modal';
-import { SettingToggleRow } from '@app/renderer/components/main/common/SettingRow';
+import { SettingToggleRow } from '@components/main/common/SettingRow';
 import { useModalPresence } from '@hooks/ui/usePopupPresence';
 
 interface PluginDataDeleteModalProps {

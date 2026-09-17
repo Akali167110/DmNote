@@ -13,6 +13,9 @@ interface PanelToggleButtonProps {
   open: boolean;
   onClick: () => void;
   commitStrategy?: CommitStrategy;
+  side?: 'left' | 'right';
+  ariaLabel?: string;
+  ariaControls?: string;
 }
 
 // tokens.css의 --ui-duration-base / --ui-ease-out과 동기 (WAAPI는 CSS 변수 참조 불가)
@@ -32,6 +35,9 @@ const PanelToggleButton = ({
   open,
   onClick,
   commitStrategy = 'after-paint',
+  side = 'right',
+  ariaLabel,
+  ariaControls,
 }: PanelToggleButtonProps) => {
   const { t } = useTranslation();
   // 버튼 ref는 두 훅이 나눠 쓴다. 커밋 프레임과 표식 프레임 모두 버튼이 사는 창 기준
@@ -87,15 +93,20 @@ const PanelToggleButton = ({
     animRef.current = anim;
   }, [visualOpen, isInstant]);
 
-  const label = visualOpen
+  const defaultLabel = visualOpen
     ? t('propertiesPanel.closePanel') || '속성 패널 닫기'
     : t('propertiesPanel.openPanel') || '속성 패널 열기';
+  const label = ariaLabel ?? defaultLabel;
 
   // 설정 세션 중에는 cancel terminal action - 입력 blur와의 click 경합 방어
   const togglePress = usePressAction(toggle);
 
   return (
-    <div className="absolute top-0 right-0 z-[var(--z-chrome-panel)] w-[48px] h-[48px] flex items-center justify-center pointer-events-none">
+    <div
+      className={`absolute top-0 ${
+        side === 'left' ? 'left-0' : 'right-0'
+      } z-[var(--z-chrome-panel)] w-[48px] h-[48px] flex items-center justify-center pointer-events-none`}
+    >
       <button
         ref={buttonRef}
         {...togglePress}
@@ -104,6 +115,7 @@ const PanelToggleButton = ({
         title={label}
         aria-label={label}
         aria-expanded={visualOpen}
+        aria-controls={ariaControls}
       >
         <span
           ref={chipRef}
@@ -112,6 +124,7 @@ const PanelToggleButton = ({
         />
         <svg
           className="relative"
+          style={side === 'left' ? { transform: 'scaleX(-1)' } : undefined}
           width="16"
           height="14"
           viewBox="0 0 16 14"

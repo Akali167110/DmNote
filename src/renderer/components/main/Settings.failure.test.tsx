@@ -114,7 +114,7 @@ vi.mock('@components/main/common/dropdown/Dropdown', () => ({
     </select>
   ),
 }));
-vi.mock('@app/renderer/components/main/common/ReloadButton', () => ({
+vi.mock('@components/main/common/ReloadButton', () => ({
   default: ({
     title,
     disabled,
@@ -129,7 +129,7 @@ vi.mock('@app/renderer/components/main/common/ReloadButton', () => ({
     </button>
   ),
 }));
-vi.mock('@app/renderer/components/main/common/SettingRow', () => ({
+vi.mock('@components/main/common/SettingRow', () => ({
   SettingCard: ({ children }: { children: React.ReactNode }) => (
     <section>{children}</section>
   ),
@@ -159,7 +159,7 @@ vi.mock('@app/renderer/components/main/common/SettingRow', () => ({
     </button>
   ),
 }));
-vi.mock('@app/renderer/components/main/SettingsPreview', () => ({
+vi.mock('@components/main/SettingsPanel/SettingsPreview', () => ({
   default: () => null,
 }));
 vi.mock(
@@ -168,48 +168,39 @@ vi.mock(
     default: () => null,
   }),
 );
-vi.mock('@app/renderer/components/main/SettingsPanel/CssPanelContent', () => ({
+vi.mock('@components/main/SettingsPanel/CssPanelContent', () => ({
   default: () => null,
 }));
-vi.mock(
-  '@app/renderer/components/main/SettingsPanel/SettingsSidePanel',
-  () => ({
-    default: ({
-      activePanel,
-      pages,
-    }: {
-      activePanel: string;
-      pages: { key: string; content: React.ReactNode }[];
-    }) => pages.find((page) => page.key === activePanel)?.content,
-  }),
-);
-vi.mock(
-  '@app/renderer/components/main/SettingsPanel/PluginsPanelContent',
-  () => ({
-    default: ({ onRemove }: { onRemove: (id: string) => void }) => (
-      <button data-remove-plugin onClick={() => onRemove('plugin-a')}>
-        삭제
+vi.mock('@components/main/SettingsPanel/SettingsSidePanel', () => ({
+  default: ({
+    activePanel,
+    pages,
+  }: {
+    activePanel: string;
+    pages: { key: string; content: React.ReactNode }[];
+  }) => pages.find((page) => page.key === activePanel)?.content,
+}));
+vi.mock('@components/main/SettingsPanel/PluginsPanelContent', () => ({
+  default: ({ onRemove }: { onRemove: (id: string) => void }) => (
+    <button data-remove-plugin onClick={() => onRemove('plugin-a')}>
+      삭제
+    </button>
+  ),
+}));
+vi.mock('@components/main/Modal/content/dialogs/PluginDataDeleteModal', () => ({
+  PluginDataDeleteModal: ({
+    isOpen,
+    onConfirm,
+  }: {
+    isOpen: boolean;
+    onConfirm: (withData: boolean) => void;
+  }) =>
+    isOpen ? (
+      <button data-delete-with-data onClick={() => onConfirm(true)}>
+        데이터 포함 삭제
       </button>
-    ),
-  }),
-);
-vi.mock(
-  '@app/renderer/components/main/Modal/content/dialogs/PluginDataDeleteModal',
-  () => ({
-    PluginDataDeleteModal: ({
-      isOpen,
-      onConfirm,
-    }: {
-      isOpen: boolean;
-      onConfirm: (withData: boolean) => void;
-    }) =>
-      isOpen ? (
-        <button data-delete-with-data onClick={() => onConfirm(true)}>
-          데이터 포함 삭제
-        </button>
-      ) : null,
-  }),
-);
+    ) : null,
+}));
 
 import Settings from './Settings';
 

@@ -59,6 +59,10 @@ import { useBatchColorPickerController } from './PropertiesPanel/batch/style/use
 // ============================================================================
 
 interface PropertiesPanelProps {
+  // 캔버스 패널을 별도로 배치하는 호스트는 선택 속성만 표시
+  includeCanvasPanel?: boolean;
+  // 고정 배치 호스트는 선택과 패널 열림 상태를 별도로 관리
+  visibilityMode?: 'selection' | 'manual';
   onKeyMappingChange?: (index: number, newKey: string) => void;
   // 분리 창 전환 액션 - 메인은 detach, 분리 창은 reattach
   detachAction?: 'detach' | 'reattach';
@@ -72,6 +76,8 @@ interface PropertiesPanelProps {
 // ============================================================================
 
 const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
+  includeCanvasPanel = true,
+  visibilityMode = 'selection',
   detachAction,
   onDetachAction,
   frameVariant = 'inline',
@@ -202,7 +208,9 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
   // 패널 모드 (layer: 레이어 패널, property: 속성 패널)
   // 설정 왕복으로 리마운트돼도 열림 상태와 함께 보존되도록 store에 유지
-  const panelMode = usePropertiesPanelStore((state) => state.canvasPanelMode);
+  const panelMode = usePropertiesPanelStore((state) =>
+    includeCanvasPanel ? state.canvasPanelMode : 'property',
+  );
   const setPanelMode = usePropertiesPanelStore(
     (state) => state.setCanvasPanelMode,
   );
@@ -325,6 +333,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   const { selectionFromLayerPanelRef, handleTogglePanel } =
     usePropertiesPanelVisibility({
       frameVariant,
+      visibilityMode,
       isPanelVisible,
       setIsPanelVisible,
       panelMode,
@@ -1136,7 +1145,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     }
 
     // 레이어 모드일 때는 선택 여부와 관계없이 레이어 패널 표시
-    if (panelMode === 'layer') {
+    if (includeCanvasPanel && panelMode === 'layer') {
       return (
         <LayerPanel
           onSwitchToProperty={handleToggleMode}
@@ -1149,6 +1158,13 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
     // 선택된 키 요소가 없으면 레이어 패널 표시
     if (selectedKeyElements.length === 0 && selectedElements.length === 0) {
+      if (!includeCanvasPanel) {
+        return (
+          <div className="p-[12px] pt-[60px] text-body text-fg-muted">
+            {t('propertiesPanel.noSelection')}
+          </div>
+        );
+      }
       return (
         <LayerPanel
           onSwitchToProperty={handleToggleMode}
@@ -1215,7 +1231,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               {panelBody}
               <PanelHeaderActions
                 mode={displayedPanelMode}
-                modeToggleHidden={!!pluginSettingsPanel}
+                modeToggleHidden={!includeCanvasPanel || !!pluginSettingsPanel}
                 modeToggleDisabled={
                   displayedPanelMode === 'layer' && !hasAnySelection
                 }

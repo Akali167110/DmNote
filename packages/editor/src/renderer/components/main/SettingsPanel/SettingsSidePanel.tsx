@@ -22,6 +22,8 @@ interface SettingsSidePanelProps {
   activePanel: SettingsPanelKey;
   pages: SettingsPanelPage[];
   onClose: () => void;
+  /** 상위 모달이 Escape와 포커스 순환을 소유하는 경우 */
+  embedded?: boolean;
 }
 
 // 우측 고정 페인의 상세 상태 - 표면은 부모 페인이 소유, 애니메이션 없이 즉시 표시
@@ -31,6 +33,7 @@ const SettingsSidePanel = ({
   activePanel,
   pages,
   onClose,
+  embedded = false,
 }: SettingsSidePanelProps) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
@@ -46,10 +49,11 @@ const SettingsSidePanel = ({
   );
 
   useLayoutEffect(() => {
+    if (embedded) return;
     const root = rootRef.current;
     if (!root) return;
     return registerPopupLayer(root);
-  }, []);
+  }, [embedded]);
 
   // 비모달 패널, 포커스 트랩 없이 진입 포커스만 이동
   // 열린 상태에서 다른 트리거로 전환해도 트리거 캡처와 포커스 이동을 다시 수행
@@ -82,6 +86,7 @@ const SettingsSidePanel = ({
 
   // 최상위 팝업 레이어일 때만 Escape 소유 (위에 뜬 모달·드롭다운이 우선)
   useEffect(() => {
+    if (embedded) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       if (e.defaultPrevented) return;
@@ -92,7 +97,7 @@ const SettingsSidePanel = ({
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, []);
+  }, [embedded]);
 
   const activePage = pages.find((page) => page.key === activePanel);
   const activeTitle = activePage?.title;

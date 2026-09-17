@@ -13,7 +13,10 @@ const mainCss = readFileSync(
   'utf8',
 );
 const reloadIconSource = readFileSync(
-  resolve(process.cwd(), 'src/renderer/components/main/common/ReloadIcon.tsx'),
+  resolve(
+    process.cwd(),
+    'packages/editor/src/renderer/components/main/common/ReloadIcon.tsx',
+  ),
   'utf8',
 );
 

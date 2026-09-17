@@ -1,8 +1,11 @@
 export { default as Grid } from './renderer/components/main/Grid/index';
 export { default as PropertiesPanel } from './renderer/components/main/Grid/PropertiesPanel';
+export { default as CanvasPanel } from './renderer/components/main/Grid/PropertiesPanel/layer/LayerPanel';
 export { default as PropertiesPanelHost } from './renderer/components/main/Grid/PropertiesPanelHost';
 export { default as ToolBar } from './renderer/components/main/Tool/ToolBar';
 export { default as EditorSaveNotice } from './renderer/components/main/EditorSaveNotice';
+export { default as EditorSettings } from './renderer/components/main/SettingsPanel/EditorSettings';
+export { default as EditorSettingsModal } from './renderer/components/main/SettingsPanel/EditorSettingsModal';
 export { I18nProvider } from './renderer/contexts/I18nContext';
 export { useTranslation } from './renderer/contexts/useTranslation';
 export { useKeyManager } from './renderer/hooks/useKeyManager';
@@ -21,3 +24,5 @@ export { usePalette } from './renderer/hooks/Modal/usePalette';
 export { useModalPresence } from './renderer/hooks/ui/usePopupPresence';
 export { useRetainedWhileOpen } from './renderer/hooks/ui/useRetainedValue';
 export { CANVAS_POPUP_CHROME_CLASS } from './renderer/components/main/Modal/popupChrome';
+export { SIDE_PANEL_FRAME_CLASS } from './renderer/components/main/Grid/PropertiesPanel/navigation/panelChrome';
+export { default as SidePanelToggle } from './renderer/components/main/Grid/PropertiesPanel/navigation/PanelToggleButton';

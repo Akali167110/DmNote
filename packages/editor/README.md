@@ -10,7 +10,7 @@ DmNote 앱에서 사용하는 편집 UI, 렌더링, 플러그인 런타임과 �
 
 | 경로                                             | 제공 기능                                                                                    |
 | ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| `@dmnote/editor/editor`                          | Grid, PropertiesPanel, ToolBar, 다이얼로그·팝업·picker, I18nProvider 및 편집 화면 훅         |
+| `@dmnote/editor/editor`                          | Grid, PropertiesPanel, ToolBar, EditorSettings·EditorSettingsModal, 다이얼로그·팝업·picker, I18nProvider 및 편집 화면 훅         |
 | `@dmnote/editor/grid` / `toolbar` / `panel-host` | Grid·ToolBar·PropertiesPanelHost 기본 export. 기존 화면의 개별 import 경계를 유지하는 진입점 |
 | `@dmnote/editor/dialogs`                         | 메인 다이얼로그 런타임과 수명 관리 훅                                                        |
 | `@dmnote/editor/globals`                         | `window.api` 등 기존 전역의 명시적 타입 진입점 (`import type {} from ...`)                   |
@@ -22,6 +22,14 @@ DmNote 앱에서 사용하는 편집 UI, 렌더링, 플러그인 런타임과 �
 | `@dmnote/editor/style.css`                       | 편집 UI에서 사용하는 토큰·전역·컴포넌트 스타일                                               |
 
 `install`은 의도적인 부수효과 진입점이다. `model`의 `createEditorCoordinator`는 환경별 `get`, `commit`, `onCommitted` 전송을 받아 독립된 동기화 인스턴스를 생성한다. `runtime`의 `editorCoordinator`와 store들은 기존 앱과 같은 문서 단위 공유 인스턴스다. 별도 preview 문서는 별도 store·플러그인 런타임을 유지하고 호스트 이벤트로 동기화한다.
+
+`PropertiesPanel visibilityMode="manual"`은 선택·선택 해제·빈 그리드 클릭에 따른 자동 열림/닫힘을 끈다. 패널 토글이나 명시적인 플러그인 설정 요청으로 열림 상태를 바꾸고, 선택 변경은 패널 내용과 내부 팝업만 갱신한다. 기본값 `"selection"`은 기존 앱의 자동 표시 동작을 유지한다. `includeCanvasPanel={false}`와 함께 사용하면 별도 레이어 패널 옆에 선택 속성 전용 패널을 고정 배치할 수 있다.
+
+캔버스 위에 왼쪽 패널을 겹쳐 배치하는 호스트는 그리드 조상의 `--dmn-grid-controls-left`를 패널 폭으로 지정해 미니맵·줌 컨트롤의 위치만 옮길 수 있다. 기본값은 `0px`이며 캔버스의 좌표나 크기는 바꾸지 않는다.
+
+`EditorSettings`는 노트 효과 표시·키 카운터 표시·커스텀 CSS·JS 플러그인·언어 설정을 기존 앱과 같은 카드 및 우측 관리 페인으로 제공한다. `EditorSettingsModal`은 트랙 설정과 같은 모달 표면과 수명을 조립하며 `isOpen`, `onClose`, `showAlert`를 받는다. 별도 상단바 없이 표시하고 Escape 또는 바깥 영역 클릭으로 닫는다. CSS·플러그인 관리 UI와 플러그인 추가·삭제 컨트롤러는 앱에서도 같은 구현을 사용한다. 파일 선택·설정 저장은 설치한 호스트 API로 처리한다.
+
+모달 영역은 앱의 상단 30px·하단 60px 크롬을 기본으로 피한다. 호스트는 `body`의 `--dmn-modal-top`, `--dmn-modal-bottom`으로 자신의 크롬 높이를 지정할 수 있다. 헤더 없는 웹 데모는 두 값을 `0px`로 지정한다.
 
 ## 호스트 연결 순서
 

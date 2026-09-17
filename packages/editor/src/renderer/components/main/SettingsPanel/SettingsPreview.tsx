@@ -1,14 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import FlaskIcon from '@assets/svgs/flask.svg';
 import { useTranslation } from '@contexts/useTranslation';
-import {
-  PREVIEW_CLIPS,
-  PREVIEW_KEYS,
-} from '@app/renderer/constants/settingsPreviewClips';
+
+export interface PreviewClip {
+  src: string;
+  /** 영상 아래에 겹치는 설명 문구의 i18n 키 */
+  caption: string;
+}
 
 interface SettingsPreviewProps {
   /** 지금 가리키는 설정. 미리보기가 없는 항목이면 기본 화면으로 돌아간다 */
   hoveredKey: string | null;
+  clips: Record<string, PreviewClip>;
 }
 
 /**
@@ -24,10 +27,11 @@ interface SettingsPreviewProps {
  */
 const SettingsPreview = ({
   hoveredKey,
+  clips,
 }: SettingsPreviewProps): React.ReactElement => {
   const { t } = useTranslation();
   const videosRef = useRef<Record<string, HTMLVideoElement | null>>({});
-  const activeKey = hoveredKey && PREVIEW_CLIPS[hoveredKey] ? hoveredKey : null;
+  const activeKey = hoveredKey && clips[hoveredKey] ? hoveredKey : null;
   const warmedRef = useRef(false);
 
   useEffect(() => {
@@ -38,7 +42,7 @@ const SettingsPreview = ({
     const warming = activeKey !== null && !warmedRef.current;
     if (warming) warmedRef.current = true;
 
-    for (const key of PREVIEW_KEYS) {
+    for (const key of Object.keys(clips)) {
       const video = videosRef.current[key];
       if (!video) continue;
       if (key === activeKey) {
@@ -54,17 +58,17 @@ const SettingsPreview = ({
       video.pause();
       if (video.currentTime !== 0) video.currentTime = 0;
     }
-  }, [activeKey]);
+  }, [activeKey, clips]);
 
   return (
     <div className="relative w-full h-full">
-      {PREVIEW_KEYS.map((key) => (
+      {Object.keys(clips).map((key) => (
         <video
           key={key}
           ref={(el) => {
             videosRef.current[key] = el;
           }}
-          src={PREVIEW_CLIPS[key].src}
+          src={clips[key].src}
           loop
           muted
           playsInline
@@ -78,7 +82,7 @@ const SettingsPreview = ({
       {activeKey ? (
         <div className="absolute bottom-0 left-0 right-0 flex justify-center items-end h-[100px] bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
           <span className="mb-[16px] text-white text-title">
-            {t(PREVIEW_CLIPS[activeKey].caption)}
+            {t(clips[activeKey].caption)}
           </span>
         </div>
       ) : (

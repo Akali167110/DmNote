@@ -11,24 +11,25 @@ import { useKnobItemStore } from '@stores/data/useKnobItemStore';
 import { useSpriteStore } from '@stores/data/useSpriteStore';
 import { useLayerGroupStore } from '@stores/data/useLayerGroupStore';
 import Dropdown from '@components/main/common/dropdown/Dropdown';
-import ReloadButton from '@app/renderer/components/main/common/ReloadButton';
+import ReloadButton from '@components/main/common/ReloadButton';
 import {
   SettingCard,
   SettingRow,
   SettingToggleRow,
-} from '@app/renderer/components/main/common/SettingRow';
-import { PluginDataDeleteModal } from '@app/renderer/components/main/Modal/content/dialogs/PluginDataDeleteModal';
-import { useDeferredHover } from '@app/renderer/hooks/ui/useDeferredHover';
+} from '@components/main/common/SettingRow';
+import { PluginDataDeleteModal } from '@components/main/Modal/content/dialogs/PluginDataDeleteModal';
+import { useDeferredHover } from '@hooks/ui/useDeferredHover';
 import { useRetainedWhileOpen } from '@hooks/ui/useRetainedValue';
-import SettingsPreview from '@app/renderer/components/main/SettingsPreview';
-import SettingsSidePanel from '@app/renderer/components/main/SettingsPanel/SettingsSidePanel';
-import type { SettingsPanelKey } from '@app/renderer/components/main/SettingsPanel/SettingsSidePanel';
+import SettingsPreview from '@components/main/SettingsPanel/SettingsPreview';
+import { PREVIEW_CLIPS } from '@app/renderer/constants/settingsPreviewClips';
+import SettingsSidePanel from '@components/main/SettingsPanel/SettingsSidePanel';
+import type { SettingsPanelKey } from '@components/main/SettingsPanel/SettingsSidePanel';
 import ShortcutsPanelContent from '@app/renderer/components/main/SettingsPanel/ShortcutsPanelContent';
-import PluginsPanelContent from '@app/renderer/components/main/SettingsPanel/PluginsPanelContent';
-import CssPanelContent from '@app/renderer/components/main/SettingsPanel/CssPanelContent';
+import PluginsPanelContent from '@components/main/SettingsPanel/PluginsPanelContent';
+import CssPanelContent from '@components/main/SettingsPanel/CssPanelContent';
 import KeySoundOutputSettings from '@app/renderer/components/main/SettingsPanel/KeySoundOutputSettings';
-import { createSettingsPluginLifecycleController } from '@app/renderer/components/main/settingsPluginLifecycleController';
-import type { PluginToDelete } from '@app/renderer/components/main/settingsPluginLifecycleController';
+import { createSettingsPluginLifecycleController } from '@components/main/SettingsPanel/settingsPluginLifecycleController';
+import type { PluginToDelete } from '@components/main/SettingsPanel/settingsPluginLifecycleController';
 import {
   FILL_DISABLED_CLASS,
   FILL_INTERACTIVE_CLASS,
@@ -739,7 +740,9 @@ const Settings = ({
           (activeSettingsPanel ? '' : ' pointer-events-none')
         }
       >
-        {!activeSettingsPanel && <SettingsPreview hoveredKey={hoveredKey} />}
+        {!activeSettingsPanel && (
+          <SettingsPreview hoveredKey={hoveredKey} clips={PREVIEW_CLIPS} />
+        )}
         {activeSettingsPanel && (
           <SettingsSidePanel
             activePanel={activeSettingsPanel}

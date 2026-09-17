@@ -86,6 +86,7 @@
     "check:packages": "node --experimental-strip-types scripts/packages/check-editor-package.ts",
     "build:web-host": "node --experimental-strip-types scripts/packages/build-web-host.ts",
     "check:web-host": "node --experimental-strip-types scripts/packages/check-web-host.ts",
+    "demo:web-host": "node --experimental-strip-types scripts/packages/demo-web-host.ts",
     "build:package-types": "tsc -p packages/ipc-shim/tsconfig.json --emitDeclarationOnly && node --experimental-strip-types scripts/packages/editor-declarations.ts && tsc -p packages/web-host/tsconfig.declarations.json",
     "build:editor": "tsc -p packages/ipc-shim/tsconfig.json && vite build --config vite.editor.config.ts && node --experimental-strip-types scripts/packages/editor-declarations.ts",
     "setup:web-wasm": "node --experimental-strip-types scripts/packages/setup-web-wasm.ts"

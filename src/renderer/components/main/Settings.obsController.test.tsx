@@ -127,12 +127,12 @@ vi.mock('@components/main/common/dropdown/Dropdown', () => ({
     </select>
   ),
 }));
-vi.mock('@app/renderer/components/main/common/ReloadButton', () => ({
+vi.mock('@components/main/common/ReloadButton', () => ({
   default: (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props} />
   ),
 }));
-vi.mock('@app/renderer/components/main/common/SettingRow', () => ({
+vi.mock('@components/main/common/SettingRow', () => ({
   SettingCard: ({ children }: { children: React.ReactNode }) => (
     <section>{children}</section>
   ),
@@ -165,40 +165,31 @@ vi.mock('@app/renderer/components/main/common/SettingRow', () => ({
     />
   ),
 }));
-vi.mock(
-  '@app/renderer/components/main/Modal/content/dialogs/PluginDataDeleteModal',
-  () => ({
-    PluginDataDeleteModal: () => null,
-  }),
-);
-vi.mock('@app/renderer/hooks/ui/useDeferredHover', () => ({
+vi.mock('@components/main/Modal/content/dialogs/PluginDataDeleteModal', () => ({
+  PluginDataDeleteModal: () => null,
+}));
+vi.mock('@hooks/ui/useDeferredHover', () => ({
   useDeferredHover: () => [null, vi.fn()],
 }));
 vi.mock('@hooks/ui/useRetainedValue', () => ({
   useRetainedWhileOpen: (_open: boolean, value: unknown) => value,
 }));
-vi.mock('@app/renderer/components/main/SettingsPreview', () => ({
+vi.mock('@components/main/SettingsPanel/SettingsPreview', () => ({
   default: () => null,
 }));
-vi.mock(
-  '@app/renderer/components/main/SettingsPanel/SettingsSidePanel',
-  () => ({
-    default: () => null,
-  }),
-);
+vi.mock('@components/main/SettingsPanel/SettingsSidePanel', () => ({
+  default: () => null,
+}));
 vi.mock(
   '@app/renderer/components/main/SettingsPanel/ShortcutsPanelContent',
   () => ({
     default: () => null,
   }),
 );
-vi.mock(
-  '@app/renderer/components/main/SettingsPanel/PluginsPanelContent',
-  () => ({
-    default: () => null,
-  }),
-);
-vi.mock('@app/renderer/components/main/SettingsPanel/CssPanelContent', () => ({
+vi.mock('@components/main/SettingsPanel/PluginsPanelContent', () => ({
+  default: () => null,
+}));
+vi.mock('@components/main/SettingsPanel/CssPanelContent', () => ({
   default: () => null,
 }));
 vi.mock(
@@ -208,7 +199,7 @@ vi.mock(
   }),
 );
 vi.mock(
-  '@app/renderer/components/main/settingsPluginLifecycleController',
+  '@components/main/SettingsPanel/settingsPluginLifecycleController',
   () => ({
     createSettingsPluginLifecycleController: () => ({
       canReloadPlugins: true,
