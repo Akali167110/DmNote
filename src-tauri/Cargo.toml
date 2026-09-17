@@ -42,7 +42,7 @@ url = "2"
 unicode-normalization = "0.1"
 zip = "0.6"
 sha2 = "0.10"
-quick-xml = "0.38"
+quick-xml = "0.42"
 infer = "0.19"
 imagesize = "0.15"
 rodio = { git = "https://github.com/lee-sihun/rodio", rev = "7b771e15", default-features = false, features = ["playback"] }
